@@ -1,27 +1,33 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>{{book}}</title>
+        <title>{{ book | upper }}</title>
         <link rel="stylesheet" href="https://unpkg.com/turretcss/dist/turretcss.min.css" crossorigin="anonymous">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body class="background-black color-white">
-        <main class="container">
-            <h1 class="display-title">{{ book }}</h1>
-        <nav class="nav-inline">
-            <ul>
-                {% if prev_book %}
-                <li>
+        <div class="container">
+            <nav class="flex flex-roow flex-align-center margin-l">
+                <div>
+                    {% if prev_book %}
                     <a href="/book/{{prev_book}}">prev {{prev_book}}</a>
-                </li>
-                {% endif %}
-                {% if next_book %}
-                <li>
+                    {% else %}
+                    <a class="cursor-not-allowed">[beginning]</a>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h1 class="display-title text-align-center">{{ book }}</h1>
+                </div>
+                <div>
+                    {% if next_book %}
                     <a href="/book/{{next_book}}">next {{next_book}}</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+                    {% else %}
+                    <a class="cursor-not-allowed">[end]</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+        <main class="container">
             {% for paragraph in paragraphs %}
             <p style="text-indent: 1rem">
             {% for verse in paragraph %}
@@ -31,20 +37,26 @@
             </p>
             {% endfor %}
         </main>
-        <nav class="nav-inline">
-            <ul>
-                {% if prev_book %}
-                <li>
-                    <a href="/book/{{next_book}}">prev {{prev_book}}</a>
-                </li>
-                {% endif %}
-                {% if next_book %}
-                <li>
+        <div class="container">
+            <nav class="flex flex-roow flex-align-center margin-l">
+                <div>
+                    {% if prev_book %}
+                    <a href="/book/{{prev_book}}">prev {{prev_book}}</a>
+                    {% else %}
+                    <a class="cursor-not-allowed">[beginning]</a>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h1 class="display-title text-align-center">{{ book }}</h1>
+                </div>
+                <div>
+                    {% if next_book %}
                     <a href="/book/{{next_book}}">next {{next_book}}</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-
+                    {% else %}
+                    <a class="cursor-not-allowed">[end]</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
     </body>
 </html>

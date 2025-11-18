@@ -1,8 +1,9 @@
 #[macro_use]
 extern crate rocket;
 use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
 use regex::Regex;
+use rocket::response::Redirect;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use tera::{Context, Tera};
@@ -18,12 +19,6 @@ struct Verse {
     chapter: usize,
     section: usize,
     text: String,
-}
-
-impl Verse {
-    fn id(&self) -> String {
-        format!("{}-{}-{}", self.book, self.chapter, self.section)
-    }
 }
 
 type BookName = String;
@@ -42,11 +37,23 @@ impl Bible {
     }
 
     fn previous(&self, book: &BookName) -> Option<&BookName> {
-        None
+        for c in 0..self.order.len() {
+            if self.order.get(c + 1) == Some(&book) {
+                return self.order.get(c);
+            }
+        }
+
+        return None;
     }
 
     fn next(&self, book: &BookName) -> Option<&BookName> {
-        None
+        for c in (1..self.order.len()).rev() {
+            if self.order.get(c - 1) == Some(&book) {
+                return self.order.get(c);
+            }
+        }
+
+        return None;
     }
 }
 
@@ -93,10 +100,6 @@ lazy_static! {
             .expect("Could not create book template");
         tera
     };
-    static ref TITLE: String = {
-        let mut lines = TEXT.lines();
-        return String::from(lines.next().unwrap());
-    };
     static ref BIBLE: Bible = {
         let re = Regex::new(VERSE_PATTERN).unwrap();
         let mut lines = TEXT.lines();
@@ -141,33 +144,11 @@ lazy_static! {
 
         Bible { order, books }
     };
-    static ref VERSES: Vec<Verse> = {
-        let re = Regex::new(VERSE_PATTERN).unwrap();
-        let mut lines = TEXT.lines();
-        lines.next().unwrap();
-
-        return lines
-            .map(|line| {
-                let caps = re.captures(line).unwrap();
-                let book = &caps["book"].to_lowercase();
-                let chapter = &caps["chapter"].parse::<usize>().unwrap();
-                let section = &caps["section"].parse::<usize>().unwrap();
-                let text = String::from(&caps["text"]);
-                return Verse {
-                    book: book.clone(),
-                    chapter: chapter.clone(),
-                    section: section.clone(),
-                    text,
-                };
-            })
-            .collect();
-    };
 }
 
 #[get("/")]
-fn index() -> &'static str {
-    println!("{:?}", *BIBLE);
-    "Hello, world!"
+fn index() -> Redirect {
+    return Redirect::to(uri!(books(String::from("ge"))));
 }
 
 #[get("/book/<book_name>")]
