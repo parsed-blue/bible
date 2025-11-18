@@ -8,7 +8,7 @@ COPY ./src ./src
 
 RUN cargo build --release
 
-FROM alpine
+FROM debian
 
 COPY --from=builder /opt/kjv/target/release/kjv /usr/local/bin/kjv
 
