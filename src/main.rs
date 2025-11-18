@@ -37,6 +37,7 @@ impl Bible {
     }
 
     fn previous(&self, book: &BookName) -> Option<&BookName> {
+        // This is bug
         for c in 0..self.order.len() {
             if self.order.get(c + 1) == Some(&book) {
                 return self.order.get(c);
