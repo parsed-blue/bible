@@ -159,6 +159,7 @@ fn books(book_name: String) -> rocket::response::content::RawHtml<String> {
     context.insert("prev_book", &BIBLE.previous(&book_name));
     context.insert("next_book", &BIBLE.next(&book_name));
     context.insert("paragraphs", &book.paragraphs());
+    context.insert("books", &BIBLE.order);
     return rocket::response::content::RawHtml(TEMPLATES.render("book.html", &context).unwrap());
 }
 

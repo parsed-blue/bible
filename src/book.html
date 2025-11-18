@@ -10,9 +10,9 @@
             <nav class="flex flex-roow flex-align-center margin-l">
                 <div>
                     {% if prev_book %}
-                    <a href="/book/{{prev_book}}">prev {{prev_book}}</a>
+                    <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
                     {% else %}
-                    <a class="cursor-not-allowed">[beginning]</a>
+                    <a class="cursor-not-allowed">(beginning)</a>
                     {% endif %}
                 </div>
                 <div class="flex-1">
@@ -20,19 +20,28 @@
                 </div>
                 <div>
                     {% if next_book %}
-                    <a href="/book/{{next_book}}">next {{next_book}}</a>
+                    <a href="/book/{{next_book}}">[{{next_book}}]</a>
                     {% else %}
-                    <a class="cursor-not-allowed">[end]</a>
+                    <a class="cursor-not-allowed">(end)</a>
                     {% endif %}
                 </div>
             </nav>
+            <div class="padding-l">
+            <p class="text-align-center">
+            {% for book in books %}
+            <span><a href="/book/{{book}}">{{book}}</a></span>
+            {% endfor %}
+            </p>
+            </div>
         </div>
         <main class="container">
             {% for paragraph in paragraphs %}
             <p style="text-indent: 1rem">
             {% for verse in paragraph %}
-            <mark class="background-grey-900"><a href="#{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{verse.chapter}}:{{verse.section}}</a></mark>
-            <span id="{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{ verse.text }}</span>
+            <span id="{{verse.book}}-{{verse.chapter}}-{{verse.section}}">
+                <mark class="background-grey-900"><a href="#{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{verse.chapter}}:{{verse.section}}</a></mark>
+                {{ verse.text }}
+            </span>
             {% endfor %}
             </p>
             {% endfor %}
@@ -41,9 +50,9 @@
             <nav class="flex flex-roow flex-align-center margin-l">
                 <div>
                     {% if prev_book %}
-                    <a href="/book/{{prev_book}}">prev {{prev_book}}</a>
+                    <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
                     {% else %}
-                    <a class="cursor-not-allowed">[beginning]</a>
+                    <a class="cursor-not-allowed">(beginning)</a>
                     {% endif %}
                 </div>
                 <div class="flex-1">
@@ -51,9 +60,9 @@
                 </div>
                 <div>
                     {% if next_book %}
-                    <a href="/book/{{next_book}}">next {{next_book}}</a>
+                    <a href="/book/{{next_book}}">[{{next_book}}]</a>
                     {% else %}
-                    <a class="cursor-not-allowed">[end]</a>
+                    <a class="cursor-not-allowed">(end)</a>
                     {% endif %}
                 </div>
             </nav>
