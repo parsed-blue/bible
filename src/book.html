@@ -7,32 +7,32 @@
     </head>
     <body class="background-black color-white">
         <div class="container">
+            <div class="flex-1 margin-l">
+                <h1 class="display-title text-align-center">{{ book }}</h1>
+            </div>
+            <div class="padding-l">
+                <p class="text-align-center">
+                {% for b in books %}
+                <span><a href="/book/{{b}}">{{b}}</a></span>
+                {% endfor %}
+                </p>
+            </div>
             <nav class="flex flex-roow flex-align-center margin-l">
-                <div>
+                <span class="text-align-left flex-1">
                     {% if prev_book %}
                     <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
                     {% else %}
                     <a class="cursor-not-allowed">(beginning)</a>
                     {% endif %}
-                </div>
-                <div class="flex-1">
-                    <h1 class="display-title text-align-center">{{ book }}</h1>
-                </div>
-                <div>
+                </span>
+                <span class="text-align-right flex-1">
                     {% if next_book %}
                     <a href="/book/{{next_book}}">[{{next_book}}]</a>
                     {% else %}
                     <a class="cursor-not-allowed">(end)</a>
                     {% endif %}
-                </div>
+                </span>
             </nav>
-            <div class="padding-l">
-            <p class="text-align-center">
-            {% for book in books %}
-            <span><a href="/book/{{book}}">{{book}}</a></span>
-            {% endfor %}
-            </p>
-            </div>
         </div>
         <main class="container">
             {% for paragraph in paragraphs %}
@@ -48,24 +48,31 @@
         </main>
         <div class="container">
             <nav class="flex flex-roow flex-align-center margin-l">
-                <div>
+                <span class="text-align-left flex-1">
                     {% if prev_book %}
                     <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
                     {% else %}
                     <a class="cursor-not-allowed">(beginning)</a>
                     {% endif %}
-                </div>
-                <div class="flex-1">
-                    <h1 class="display-title text-align-center">{{ book }}</h1>
-                </div>
-                <div>
+                </span>
+                <span class="text-align-right flex-1">
                     {% if next_book %}
                     <a href="/book/{{next_book}}">[{{next_book}}]</a>
                     {% else %}
                     <a class="cursor-not-allowed">(end)</a>
                     {% endif %}
-                </div>
+                </span>
             </nav>
+            <div class="padding-l">
+                <p class="text-align-center">
+                {% for b in books %}
+                <span><a href="/book/{{b}}">{{b}}</a></span>
+                {% endfor %}
+                </p>
+            </div>
+            <div class="flex-1 margin-l">
+                <h1 class="display-title text-align-center">{{ book }}</h1>
+            </div>
         </div>
     </body>
 </html>
