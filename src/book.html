@@ -21,7 +21,7 @@
                 {% endfor %}
                 </p>
             </div>
-            <nav class="flex flex-roow flex-align-center margin-l">
+            <nav class="flex flex-roow flex-align-center margin-top-l margin-bottom-l">
                 <span class="text-align-left flex-1">
                     {% if prev_book %}
                     <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
@@ -40,10 +40,11 @@
         </div>
         <main class="container">
             {% for paragraph in paragraphs %}
-            <p style="text-indent: 1rem" class="line-height-xl">
+            <h3 id="chapter-{{paragraph[0].chapter}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#chapter-{{paragraph[0].chapter}}">{{paragraph[0].chapter}}</a></span></h3>
+            <p style="text-indent: 1rem" class="line-height-xl text-align-justify">
             {% for verse in paragraph %}
-            <span id="{{verse.book}}-{{verse.chapter}}-{{verse.section}}">
-                <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a href="#{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{verse.chapter}}:{{verse.section}}</a></mark>
+            <span id="verse-{{verse.chapter}}:{{verse.section}}">
+                <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a style="text-decoration:none;" href="#verse-{{verse.chapter}}:{{verse.section}}">{{verse.section}}</a></mark>
                 {{ verse.text }}
             </span>
             {% endfor %}
@@ -51,7 +52,7 @@
             {% endfor %}
         </main>
         <div class="container">
-            <nav class="flex flex-roow flex-align-center margin-l">
+            <nav class="flex flex-roow flex-align-center margin-top-l margin-bottom-l">
                 <span class="text-align-left flex-1">
                     {% if prev_book %}
                     <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
@@ -78,7 +79,7 @@
                 <h1 class="display-title text-align-center">[{{ book }}]</h1>
             </div>
         </div>
-        <div class="background-warning-500 color-black padding-xxs font-weight-bold">
+        <div class="background-warning-500 color-black padding-s font-weight-bold text-align-right">
             <span><a href="/cache">[cache]</a></span>
         </div>
     </body>
