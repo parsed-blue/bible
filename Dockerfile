@@ -12,4 +12,4 @@ FROM debian
 
 COPY --from=builder /opt/kjv/target/release/kjv /usr/local/bin/kjv
 
-CMD /usr/local/bin/kjv
+CMD ["/usr/local/bin/kjv"]
