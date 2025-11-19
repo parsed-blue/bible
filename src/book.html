@@ -8,12 +8,12 @@
     <body class="background-black color-white">
         <div class="container">
             <div class="flex-1 margin-l">
-                <h1 class="display-title text-align-center">{{ book }}</h1>
+                <h1 class="display-title text-align-center">[{{ book }}]</h1>
             </div>
             <div class="padding-l">
                 <p class="text-align-center">
                 {% for b in books %}
-                <span><a href="/book/{{b}}">{{b}}</a></span>
+                <span><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
                 {% endfor %}
                 </p>
             </div>
@@ -36,10 +36,10 @@
         </div>
         <main class="container">
             {% for paragraph in paragraphs %}
-            <p style="text-indent: 1rem">
+            <p style="text-indent: 1rem" class="line-height-xl">
             {% for verse in paragraph %}
             <span id="{{verse.book}}-{{verse.chapter}}-{{verse.section}}">
-                <mark class="background-grey-900"><a href="#{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{verse.chapter}}:{{verse.section}}</a></mark>
+                <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a href="#{{verse.book}}-{{verse.chapter}}-{{verse.section}}">{{verse.chapter}}:{{verse.section}}</a></mark>
                 {{ verse.text }}
             </span>
             {% endfor %}
@@ -66,12 +66,12 @@
             <div class="padding-l">
                 <p class="text-align-center">
                 {% for b in books %}
-                <span><a href="/book/{{b}}">{{b}}</a></span>
+                <span><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
                 {% endfor %}
                 </p>
             </div>
             <div class="flex-1 margin-l">
-                <h1 class="display-title text-align-center">{{ book }}</h1>
+                <h1 class="display-title text-align-center">[{{ book }}]</h1>
             </div>
         </div>
     </body>
