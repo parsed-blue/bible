@@ -81,15 +81,13 @@ impl Book {
     fn paragraphs(&self) -> Vec<Vec<Verse>> {
         let mut book: Vec<Vec<Verse>> = vec![];
 
-        for chapter_num in 1..=self.chapters.len() {
+        for (chapter, sections) in self.chapters.iter() {
             let mut verses: Vec<Verse> = vec![];
-            let chapter = self.chapters.get(&chapter_num).unwrap();
-            for section_num in 1..=chapter.len() {
-                let text = chapter.get(&section_num).unwrap();
+            for (section, text) in sections.iter() {
                 verses.push(Verse {
                     book: self.name.clone(),
-                    chapter: chapter_num,
-                    section: section_num,
+                    chapter: *chapter,
+                    section: *section,
                     text: text.clone(),
                 })
             }
