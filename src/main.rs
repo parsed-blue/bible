@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate rocket;
+use dashmap::DashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rocket::response::Redirect;
+use rocket::response::content::RawHtml;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tera::{Context, Tera};
 
 const TEXT: &str = include_str!("./kjv.txt");
@@ -32,29 +35,29 @@ struct Bible {
 }
 
 impl Bible {
-    fn get(&self, book: &BookName) -> Option<&Book> {
+    fn get(&self, book: &str) -> Option<&Book> {
         self.books.get(book)
     }
 
-    fn previous(&self, book: &BookName) -> Option<&BookName> {
+    fn previous(&self, book: &str) -> Option<&BookName> {
         // This is bug
         for c in 0..self.order.len() {
-            if self.order.get(c + 1) == Some(&book) {
+            if self.order.get(c + 1).map(|s| s.as_str()) == Some(book) {
                 return self.order.get(c);
             }
         }
 
-        return None;
+        None
     }
 
-    fn next(&self, book: &BookName) -> Option<&BookName> {
+    fn next(&self, book: &str) -> Option<&BookName> {
         for c in (1..self.order.len()).rev() {
-            if self.order.get(c - 1) == Some(&book) {
+            if self.order.get(c - 1).map(|s| s.as_str()) == Some(book) {
                 return self.order.get(c);
             }
         }
 
-        return None;
+        None
     }
 }
 
@@ -90,7 +93,7 @@ impl Book {
             book.push(verses);
         }
 
-        return book;
+        book
     }
 }
 
@@ -112,12 +115,12 @@ lazy_static! {
                 let chapter = &caps["chapter"].parse::<usize>().unwrap();
                 let section = &caps["section"].parse::<usize>().unwrap();
                 let text = String::from(&caps["text"]);
-                return Verse {
+                Verse {
                     book: book.clone(),
-                    chapter: chapter.clone(),
-                    section: section.clone(),
+                    chapter: *chapter,
+                    section: *section,
                     text,
-                };
+                }
             })
             .collect();
 
@@ -133,38 +136,48 @@ lazy_static! {
                 books.insert(verse.book.clone(), Book::new(verse.book.clone()));
             }
             let book = books.get_mut(&verse.book).expect("could not get book");
-            if !book.chapters.contains_key(&verse.chapter) {
-                book.chapters.insert(verse.chapter, BTreeMap::new());
-            }
-            let chapter = book
-                .chapters
-                .get_mut(&verse.chapter)
-                .expect("could not get chapter");
+            let chapter = book.chapters.entry(verse.chapter).or_default();
+            // let chapter = book
+            //     .chapters
+            //     .get_mut(&verse.chapter)
+            //     .expect("could not get chapter");
             chapter.insert(verse.section, verse.text.clone());
         }
 
         Bible { order, books }
     };
+    static ref CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
 }
 
 #[get("/")]
 fn index() -> Redirect {
-    return Redirect::to(uri!(books(String::from("ge"))));
+    Redirect::to(uri!(books(String::from("ge"))))
 }
 
 #[get("/book/<book_name>")]
-fn books(book_name: String) -> rocket::response::content::RawHtml<String> {
+fn books(book_name: &str) -> RawHtml<String> {
+    let key = String::from(book_name);
+    if let Some(content) = CACHE.get(&key) {
+        return rocket::response::content::RawHtml(content.clone());
+    }
     let mut context = Context::new();
-    let book = BIBLE.get(&book_name).unwrap();
-    context.insert("book", &book_name);
-    context.insert("prev_book", &BIBLE.previous(&book_name));
-    context.insert("next_book", &BIBLE.next(&book_name));
+    let book = BIBLE.get(book_name).unwrap();
+    context.insert("book", book_name);
+    context.insert("prev_book", &BIBLE.previous(book_name));
+    context.insert("next_book", &BIBLE.next(book_name));
     context.insert("paragraphs", &book.paragraphs());
     context.insert("books", &BIBLE.order);
-    return rocket::response::content::RawHtml(TEMPLATES.render("book.html", &context).unwrap());
+    let content = TEMPLATES.render("book.html", &context).unwrap();
+    CACHE.insert(key.clone(), content);
+    return RawHtml(CACHE.get(&key).unwrap().clone());
+}
+
+#[get("/cache")]
+fn cache() -> String {
+    format!("cache.len()={}", CACHE.len())
 }
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, books])
+    rocket::build().mount("/", routes![index, books, cache])
 }
