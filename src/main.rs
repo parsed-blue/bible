@@ -14,6 +14,9 @@ use tera::{Context, Tera};
 const TEXT: &str = include_str!("./kjv.txt");
 const BOOK_HTML: &str = include_str!("./book.html");
 const CACHE_HTML: &str = include_str!("./cache.html");
+const LOGO_SVG: &str = include_str!("./logo.svg");
+const LOGO_PNG: &[u8] = include_bytes!("./logo.png");
+const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
 
 const VERSE_PATTERN: &str = r"(?<book>\d?[a-zA-Z]+)(?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
 
@@ -41,7 +44,6 @@ impl Bible {
     }
 
     fn previous(&self, book: &str) -> Option<&BookName> {
-        // This is bug
         for c in 0..self.order.len() {
             if self.order.get(c + 1).map(|s| s.as_str()) == Some(book) {
                 return self.order.get(c);
@@ -152,6 +154,21 @@ fn index() -> Redirect {
     Redirect::to(uri!(books(String::from("ge"))))
 }
 
+#[get("/favicon.svg")]
+fn favicon_svg() -> &'static str {
+    LOGO_SVG
+}
+
+#[get("/favicon.png")]
+fn favicon_png() -> &'static [u8] {
+    LOGO_PNG
+}
+
+#[get("/favicon.ico")]
+fn favicon_ico() -> &'static [u8] {
+    LOGO_ICO
+}
+
 #[get("/book/<book_name>")]
 fn books(book_name: &str) -> RawHtml<String> {
     let key = String::from(book_name);
@@ -182,5 +199,8 @@ fn cache() -> RawHtml<String> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, books, cache])
+    rocket::build().mount(
+        "/",
+        routes![index, books, cache, favicon_svg, favicon_png, favicon_ico],
+    )
 }
