@@ -7,25 +7,50 @@
     systems.url = "github:nix-systems/default";
   };
 
-  outputs = { self, nixpkgs, naersk, systems }: let
-    eachSystem = nixpkgs.lib.genAttrs (import systems);
-    pkgs = nixpkgs.legacyPackages."aarch64-darwin";
-    naerskLib = pkgs.callPackage naersk {};
-  in {
-    packages = eachSystem (system: {
-      default = naerskLib.buildPackage {
-        src = ./.;
-        buildInputs = [ pkgs.glib ];
-        nativeBuildInputs = [ pkgs.pkg-config ];
-      };
-    });
-    # packages.aarch64-darwin.default = pkgs.callPackage ./default.nix { };
-    devShells.aarch64-darwin.default = pkgs.mkShell {
-      buildInputs = with pkgs; [
-        cargo rustc rustfmt clippy rust-analyzer glib
-      ];
-      nativeBuildInputs = [pkgs.pkg-config];
-      env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+  outputs =
+    {
+      self,
+      nixpkgs,
+      naersk,
+      systems,
+    }:
+    let
+      eachSystem = nixpkgs.lib.genAttrs (import systems);
+    in
+    {
+      packages = eachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          naerskLib = pkgs.callPackage naersk { };
+        in
+        {
+          default = naerskLib.buildPackage {
+            src = ./.;
+            buildInputs = [ pkgs.glib ];
+            nativeBuildInputs = [ pkgs.pkg-config ];
+          };
+        }
+      );
+      devShells = eachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          naerskLib = pkgs.callPackage naersk { };
+        in
+        {
+          buildInputs = with pkgs; [
+            cargo
+            rustc
+            rustfmt
+            clippy
+            rust-analyzer
+            glib
+            nixfmt-rfc-style
+          ];
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+        }
+      );
     };
-  };
 }

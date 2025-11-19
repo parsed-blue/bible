@@ -1,7 +1,7 @@
 {
   rustPlatform,
   glib,
-  pkg-config
+  pkg-config,
 }:
 rustPlatform.buildRustPackage {
   name = "kjv";
