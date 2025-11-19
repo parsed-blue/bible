@@ -13,6 +13,7 @@ use tera::{Context, Tera};
 
 const TEXT: &str = include_str!("./kjv.txt");
 const BOOK_HTML: &str = include_str!("./book.html");
+const CACHE_HTML: &str = include_str!("./cache.html");
 
 const VERSE_PATTERN: &str = r"(?<book>\d?[a-zA-Z]+)(?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
 
@@ -102,6 +103,8 @@ lazy_static! {
         let mut tera = Tera::default();
         tera.add_raw_template("book.html", BOOK_HTML)
             .expect("Could not create book template");
+        tera.add_raw_template("cache.html", CACHE_HTML)
+            .expect("Could not create cache template");
         tera
     };
     static ref BIBLE: Bible = {
@@ -132,15 +135,10 @@ lazy_static! {
                 order.push(verse.book.clone());
             }
 
-            if !books.contains_key(&verse.book) {
-                books.insert(verse.book.clone(), Book::new(verse.book.clone()));
-            }
-            let book = books.get_mut(&verse.book).expect("could not get book");
+            let book = books
+                .entry(verse.book.clone())
+                .or_insert_with(|| Book::new(verse.book.clone()));
             let chapter = book.chapters.entry(verse.chapter).or_default();
-            // let chapter = book
-            //     .chapters
-            //     .get_mut(&verse.chapter)
-            //     .expect("could not get chapter");
             chapter.insert(verse.section, verse.text.clone());
         }
 
@@ -157,24 +155,29 @@ fn index() -> Redirect {
 #[get("/book/<book_name>")]
 fn books(book_name: &str) -> RawHtml<String> {
     let key = String::from(book_name);
-    if let Some(content) = CACHE.get(&key) {
-        return rocket::response::content::RawHtml(content.clone());
-    }
-    let mut context = Context::new();
-    let book = BIBLE.get(book_name).unwrap();
-    context.insert("book", book_name);
-    context.insert("prev_book", &BIBLE.previous(book_name));
-    context.insert("next_book", &BIBLE.next(book_name));
-    context.insert("paragraphs", &book.paragraphs());
-    context.insert("books", &BIBLE.order);
-    let content = TEMPLATES.render("book.html", &context).unwrap();
-    CACHE.insert(key.clone(), content);
-    return RawHtml(CACHE.get(&key).unwrap().clone());
+    return RawHtml(
+        CACHE
+            .entry(key)
+            .or_insert_with(|| {
+                let mut context = Context::new();
+                let book = BIBLE.get(book_name).unwrap();
+                context.insert("book", book_name);
+                context.insert("prev_book", &BIBLE.previous(book_name));
+                context.insert("next_book", &BIBLE.next(book_name));
+                context.insert("paragraphs", &book.paragraphs());
+                context.insert("books", &BIBLE.order);
+                TEMPLATES.render("book.html", &context).unwrap()
+            })
+            .value()
+            .clone(),
+    );
 }
 
 #[get("/cache")]
-fn cache() -> String {
-    format!("cache.len()={}", CACHE.len())
+fn cache() -> RawHtml<String> {
+    let mut context = Context::new();
+    context.insert("entries", &CACHE.len());
+    RawHtml(TEMPLATES.render("cache.html", &context).unwrap())
 }
 
 #[launch]
