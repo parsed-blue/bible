@@ -10,6 +10,7 @@ use tera::Context;
 mod templates;
 mod erv;
 mod kjv;
+mod web;
 mod bible;
 
 use bible::{Bible};
@@ -23,14 +24,16 @@ const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
 enum Version {
     KJV,
     ERV,
+    WEB,
 }
 
-const VERSION: Version = Version::ERV;
+const VERSION: Version = Version::WEB;
 
 lazy_static! {
     static ref BIBLE: Bible = match VERSION {
         Version::KJV => kjv::load(),
         Version::ERV => erv::load(),
+        Version::WEB => web::load(),
     };
     static ref CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
 }

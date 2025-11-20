@@ -4,7 +4,7 @@ use std::collections::{HashMap};
 use regex::Regex;
 
 const TEXT: &str = include_str!("./erv.txt");
-const VERSE_PATTERN: &str = r"(?<book>\d?[a-zA-Z]+) (?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
+const VERSE_PATTERN: &str = r"(?<book>(\d )?[a-zA-Z]+) (?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
 
 pub fn load() -> Bible {
     let re = Regex::new(VERSE_PATTERN).unwrap();
