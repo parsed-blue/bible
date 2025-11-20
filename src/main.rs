@@ -16,6 +16,7 @@ const BOOK_HTML: &str = include_str!("./templates/book.html");
 const INFO_HTML: &str = include_str!("./templates/info.html");
 const BOOK_LIST_HTML: &str = include_str!("./templates/book-list.html");
 const PAGER_HTML: &str = include_str!("./templates/pager.html");
+const TITLE_HTML: &str = include_str!("./templates/title.html");
 const LOGO_SVG: &str = include_str!("./logo.svg");
 const LOGO_PNG: &[u8] = include_bytes!("./logo.png");
 const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
@@ -107,6 +108,7 @@ lazy_static! {
         tera.add_raw_template("info.html", INFO_HTML).unwrap();
         tera.add_raw_template("pager.html", PAGER_HTML).unwrap();
         tera.add_raw_template("book-list.html", BOOK_LIST_HTML).unwrap();
+        tera.add_raw_template("title.html", TITLE_HTML).unwrap();
         tera
     };
     static ref BIBLE: Bible = {

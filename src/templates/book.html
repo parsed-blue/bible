@@ -11,9 +11,7 @@
     <body class="background-black color-white">
         <div class="background-warning-500 padding-top-xxs"></div>
         <div class="container">
-            <div class="margin-l">
-                <h1 style="text-transform: capitalize" class="display-title text-align-center">{{ book }}</h1>
-            </div>
+            {% include "title.html" %}
             {% include "book-list.html" %}
             {% include "pager.html" %}
         </div>
@@ -33,12 +31,10 @@
         <div class="container">
             {% include "pager.html" %}
             {% include "book-list.html" %}
-            <div class="flex-1 margin-l">
-                <h1 class="display-title text-align-center">[{{ book }}]</h1>
-            </div>
+            {% include "title.html" %}
         </div>
         <div class="background-warning-500 color-black padding-s font-weight-bold text-align-right">
-            <span><a href="/.info">[info]</a></span>
+            <span><a href="/.info">info</a></span>
         </div>
     </body>
 </html>
