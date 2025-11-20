@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{
-    HashMap, BTreeMap
-};
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Verse {

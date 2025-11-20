@@ -1,9 +1,10 @@
-use crate::bible::{Bible, Verse, Book, BookName};
-use std::collections::{HashMap};
+use crate::bible::{Bible, Book, BookName, Verse};
 use regex::Regex;
+use std::collections::HashMap;
 
 const TEXT: &str = include_str!("./web.txt");
-const VERSE_PATTERN: &str = r"(?<book>(\d )?[a-zA-Z]+) (?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
+const VERSE_PATTERN: &str =
+    r"(?<book>(\d )?[a-zA-Z]+) (?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
 
 pub fn load() -> Bible {
     let re = Regex::new(VERSE_PATTERN).unwrap();
@@ -25,7 +26,7 @@ pub fn load() -> Bible {
                 text,
             }
         })
-    .collect();
+        .collect();
 
     let mut order: Vec<BookName> = vec![];
 
@@ -44,5 +45,4 @@ pub fn load() -> Bible {
     }
 
     Bible { order, books }
-
 }
