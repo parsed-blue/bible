@@ -12,8 +12,10 @@ use std::sync::Arc;
 use tera::{Context, Tera};
 
 const TEXT: &str = include_str!("./kjv.txt");
-const BOOK_HTML: &str = include_str!("./book.html");
-const CACHE_HTML: &str = include_str!("./cache.html");
+const BOOK_HTML: &str = include_str!("./templates/book.html");
+const INFO_HTML: &str = include_str!("./templates/info.html");
+const BOOK_LIST_HTML: &str = include_str!("./templates/book-list.html");
+const PAGER_HTML: &str = include_str!("./templates/pager.html");
 const LOGO_SVG: &str = include_str!("./logo.svg");
 const LOGO_PNG: &[u8] = include_bytes!("./logo.png");
 const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
@@ -101,10 +103,10 @@ impl Book {
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = Tera::default();
-        tera.add_raw_template("book.html", BOOK_HTML)
-            .expect("Could not create book template");
-        tera.add_raw_template("cache.html", CACHE_HTML)
-            .expect("Could not create cache template");
+        tera.add_raw_template("book.html", BOOK_HTML).unwrap();
+        tera.add_raw_template("info.html", INFO_HTML).unwrap();
+        tera.add_raw_template("pager.html", PAGER_HTML).unwrap();
+        tera.add_raw_template("book-list.html", BOOK_LIST_HTML).unwrap();
         tera
     };
     static ref BIBLE: Bible = {
@@ -188,11 +190,11 @@ fn books(book_name: &str) -> RawHtml<String> {
     );
 }
 
-#[get("/cache")]
+#[get("/.info")]
 fn cache() -> RawHtml<String> {
     let mut context = Context::new();
     context.insert("entries", &CACHE.len());
-    RawHtml(TEMPLATES.render("cache.html", &context).unwrap())
+    RawHtml(TEMPLATES.render("info.html", &context).unwrap())
 }
 
 #[launch]
