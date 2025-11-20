@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>[{{ book }}]</title>
+        <title>Bible • {{ book | capitalize }}</title>
         <link rel="stylesheet" href="https://unpkg.com/turretcss/dist/turretcss.min.css" crossorigin="anonymous">
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -11,29 +11,31 @@
     <body class="background-black color-white">
         <div class="background-warning-500 padding-top-xxs"></div>
         <div class="container">
-            <div class="flex-1 margin-l">
-                <h1 class="display-title text-align-center">[{{ book }}]</h1>
+            <div class="margin-l">
+                <h1 style="text-transform: capitalize" class="display-title text-align-center">{{ book }}</h1>
             </div>
-            <div class="padding-l">
+        </div>
+        <div class="container">
+            <div class="padding-md">
                 <p class="text-align-center">
                 {% for b in books %}
-                <span><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
+                <span class="text-transform-capitalize"><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
                 {% endfor %}
                 </p>
             </div>
             <nav class="flex flex-roow flex-align-center margin-top-l margin-bottom-l">
-                <span class="text-align-left flex-1">
+                <span class="text-align-left flex-1 text-transform-capitalize">
                     {% if prev_book %}
-                    <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
+                    <a href="/book/{{prev_book}}">{{prev_book}}</a>
                     {% else %}
-                    <a class="cursor-not-allowed">(beginning)</a>
+                    <a class="color-info-400 cursor-not-allowed">beginning</a>
                     {% endif %}
                 </span>
-                <span class="text-align-right flex-1">
+                <span class="text-align-right flex-1 text-transform-capitalize">
                     {% if next_book %}
-                    <a href="/book/{{next_book}}">[{{next_book}}]</a>
+                    <a href="/book/{{next_book}}">{{next_book}}</a>
                     {% else %}
-                    <a class="cursor-not-allowed">(end)</a>
+                    <a class="color-info-400 cursor-not-allowed">end</a>
                     {% endif %}
                 </span>
             </nav>
@@ -53,25 +55,25 @@
         </main>
         <div class="container">
             <nav class="flex flex-roow flex-align-center margin-top-l margin-bottom-l">
-                <span class="text-align-left flex-1">
+                <span class="text-align-left flex-1 text-transform-capitalize">
                     {% if prev_book %}
-                    <a href="/book/{{prev_book}}">[{{prev_book}}]</a>
+                    <a href="/book/{{prev_book}}">{{prev_book}}</a>
                     {% else %}
-                    <a class="cursor-not-allowed">(beginning)</a>
+                    <a class="color-info-400 cursor-not-allowed">beginning</a>
                     {% endif %}
                 </span>
-                <span class="text-align-right flex-1">
+                <span class="text-align-right flex-1 text-transform-capitalize">
                     {% if next_book %}
-                    <a href="/book/{{next_book}}">[{{next_book}}]</a>
+                    <a href="/book/{{next_book}}">{{next_book}}</a>
                     {% else %}
-                    <a class="cursor-not-allowed">(end)</a>
+                    <a class="color-info-400 cursor-not-allowed">end</a>
                     {% endif %}
                 </span>
             </nav>
             <div class="padding-l">
                 <p class="text-align-center">
                 {% for b in books %}
-                <span><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
+                <span class="text-transform-capitalize"><a class="{% if b == book %}color-warning-500 font-weight-bold{% endif %}" href="/book/{{b}}">{{b}}</a></span>
                 {% endfor %}
                 </p>
             </div>
