@@ -9,14 +9,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tera::{Context, Tera};
+use tera::Context;
+
+mod templates;
+
+use templates::TEMPLATES;
 
 const TEXT: &str = include_str!("./kjv.txt");
-const BOOK_HTML: &str = include_str!("./templates/book.html");
-const INFO_HTML: &str = include_str!("./templates/info.html");
-const BOOK_LIST_HTML: &str = include_str!("./templates/book-list.html");
-const PAGER_HTML: &str = include_str!("./templates/pager.html");
-const TITLE_HTML: &str = include_str!("./templates/title.html");
 const LOGO_SVG: &str = include_str!("./logo.svg");
 const LOGO_PNG: &[u8] = include_bytes!("./logo.png");
 const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
@@ -102,19 +101,11 @@ impl Book {
 }
 
 lazy_static! {
-    pub static ref TEMPLATES: Tera = {
-        let mut tera = Tera::default();
-        tera.add_raw_template("book.html", BOOK_HTML).unwrap();
-        tera.add_raw_template("info.html", INFO_HTML).unwrap();
-        tera.add_raw_template("pager.html", PAGER_HTML).unwrap();
-        tera.add_raw_template("book-list.html", BOOK_LIST_HTML).unwrap();
-        tera.add_raw_template("title.html", TITLE_HTML).unwrap();
-        tera
-    };
     static ref BIBLE: Bible = {
         let re = Regex::new(VERSE_PATTERN).unwrap();
         let mut lines = TEXT.lines();
         lines.next().unwrap();
+
         let verses: Vec<Verse> = lines
             .map(|line| {
                 let caps = re.captures(line).unwrap();
@@ -132,6 +123,7 @@ lazy_static! {
             .collect();
 
         let mut order: Vec<BookName> = vec![];
+
         let mut books: HashMap<BookName, Book> = HashMap::new();
 
         for verse in verses.iter() {
