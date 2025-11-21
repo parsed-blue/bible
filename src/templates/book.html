@@ -19,14 +19,14 @@
         <main class="container max-width-m">
             {% for paragraph in paragraphs %}
             <h3 id="chapter-{{paragraph[0].chapter}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#chapter-{{paragraph[0].chapter}}">{{paragraph[0].chapter}}</a></span></h3>
-            <p style="text-indent: 1rem" class="line-height-xl text-align-justify">
+            <div class="line-height-xl text-align-justify">
             {% for verse in paragraph %}
-            <span id="verse-{{verse.chapter}}:{{verse.section}}">
+            <p id="verse-{{verse.chapter}}:{{verse.section}}">
                 <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a style="text-decoration:none;" href="#verse-{{verse.chapter}}:{{verse.section}}">{{verse.section}}</a></mark>
                 {{ verse.text }}
-            </span>
-            {% endfor %}
             </p>
+            {% endfor %}
+            </div>
             {% endfor %}
         </main>
         <section class="container max-width-m">

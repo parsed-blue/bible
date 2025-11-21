@@ -1,7 +1,7 @@
 <div class="book-list padding-md">
-    <p class="text-align-center">
+    <p class="text-align-justify">
     {% for b in books %}
-    <span class="text-transform-capitalize"><a class="{% if b == book %}color-warning-500{% endif %}" href="/book/{{b|urlencode}}">{{b}}</a></span>
+    <span style="white-space:nowrap" class="font-size-xxs text-transform-capitalize"><a class="{% if b == book %}color-warning-500{% endif %}" href="/book/{{b|urlencode}}">{{b}}</a></span>
     {% endfor %}
     </p>
 </div>
