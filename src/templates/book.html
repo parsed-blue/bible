@@ -51,9 +51,11 @@
         <script type="module">
             console.log(`
 Hey there!
-If you opened this up, maybe you'd be interested in donating!
-Here's my Bitcoin wallet address: 
-`);
+If you opened this up, maybe you'd be interested in helping out!
+Here's the:
+Github: https://github.com/parsed-blue/bible{% if bit_addr or eth_addr %}
+{% if bit_addr %}Bitcoin address: {{bit_addr}}{% endif %}
+{% if eth_addr %}Ethereum address: {{eth_addr}}{% endif %}{% endif %}`);
         </script>
     </body>
 </html>

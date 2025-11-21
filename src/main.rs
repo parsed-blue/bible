@@ -6,6 +6,7 @@ use rocket::http::Status;
 use rocket::response::content::RawHtml;
 use rocket::{Request, response::Redirect};
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::sync::Arc;
 use tera::Context;
 
@@ -76,6 +77,8 @@ fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Re
                 context.insert("books", &state.bible.order);
                 context.insert("version", &VERSION);
                 context.insert("commit_hash", &state.commit_hash.as_str());
+                context.insert("bit_addr", &env::var("BIT_ADDR").ok());
+                context.insert("eth_addr", &env::var("ETH_ADDR").ok());
                 TEMPLATES.render("book.html", &context).unwrap()
             })
             .value()
