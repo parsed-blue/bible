@@ -27,8 +27,8 @@
         {
           default = naerskLib.buildPackage {
             src = ./.;
-            buildInputs = [ pkgs.glib ];
-            nativeBuildInputs = [ pkgs.pkg-config ];
+            # buildInputs = [ pkgs.glib ];
+            # nativeBuildInputs = [ pkgs.pkg-config ];
           };
         }
       );
@@ -48,7 +48,7 @@
             glib
             nixfmt-rfc-style
           ];
-          nativeBuildInputs = [ pkgs.pkg-config ];
+          # nativeBuildInputs = [ pkgs.pkg-config ];
           env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
         }
       );
