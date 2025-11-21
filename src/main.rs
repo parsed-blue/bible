@@ -2,7 +2,8 @@
 extern crate rocket;
 use dashmap::DashMap;
 use lazy_static::lazy_static;
-use rocket::response::Redirect;
+use rocket::{Request, response::Redirect};
+use rocket::http::Status;
 use rocket::response::content::RawHtml;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -24,18 +25,18 @@ const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
 
 #[derive(Serialize, Deserialize)]
 enum Version {
-    KJV,
-    ERV,
-    WEB,
+    Kjv,
+    Erv,
+    Web,
 }
 
-const VERSION: Version = Version::WEB;
+const VERSION: Version = Version::Web;
 
 lazy_static! {
     static ref BIBLE: Bible = match VERSION {
-        Version::KJV => kjv::load(),
-        Version::ERV => erv::load(),
-        Version::WEB => web::load(),
+        Version::Kjv => kjv::load(),
+        Version::Erv => erv::load(),
+        Version::Web => web::load(),
     };
     static ref CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
 }
@@ -66,7 +67,7 @@ fn books(book_name: &str) -> Result<RawHtml<String>, Redirect> {
         return Err(Redirect::to(uri!("/")));
     };
     let key = String::from(book_name);
-    return Ok(RawHtml(
+    Ok(RawHtml(
         CACHE
             .entry(key)
             .or_insert_with(|| {
@@ -81,7 +82,7 @@ fn books(book_name: &str) -> Result<RawHtml<String>, Redirect> {
             })
             .value()
             .clone(),
-    ));
+    ))
 }
 
 #[get("/.info")]
@@ -91,9 +92,16 @@ fn cache() -> RawHtml<String> {
     RawHtml(TEMPLATES.render("info.html", &context).unwrap())
 }
 
+#[catch(default)]
+fn default_catcher(_: Status, _: &Request) -> Redirect {
+    Redirect::to(uri!("/"))
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount(
+    rocket::build()
+        .register("/", catchers![default_catcher])
+        .mount(
         "/",
         routes![index, books, cache, favicon_svg, favicon_png, favicon_ico],
     )
