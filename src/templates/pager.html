@@ -3,14 +3,14 @@
         {% if prev_book %}
         <a href="/book/{{prev_book|urlencode}}">{{prev_book}}</a>
         {% else %}
-        <a style="text-decoration:none" class="color-warning-400 cursor-not-allowed">the beginning</a>
+        <a style="text-decoration:none" class="color-warning-500 cursor-not-allowed">the beginning</a>
         {% endif %}
     </span>
     <span class="text-align-right flex-1 text-transform-capitalize">
         {% if next_book %}
         <a href="/book/{{next_book|urlencode}}">{{next_book}}</a>
         {% else %}
-        <a style="text-decoration:none" class="color-warning-400 cursor-not-allowed">the end</a>
+        <a style="text-decoration:none" class="color-warning-500 cursor-not-allowed">the end</a>
         {% endif %}
     </span>
 </nav>
