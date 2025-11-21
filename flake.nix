@@ -1,10 +1,10 @@
 {
-  description = "A website serving the the King James Version of the Bible";
+  description = "A website serving the the World English People Version of the Bible";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     naersk.url = "github:nix-community/naersk";
-    systems.url = "github:nix-systems/default";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
@@ -12,43 +12,21 @@
       self,
       nixpkgs,
       naersk,
-      systems,
+      flake-utils,
     }:
-    let
-      eachSystem = nixpkgs.lib.genAttrs (import systems);
-    in
-    {
-      packages = eachSystem (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          naerskLib = pkgs.callPackage naersk { };
-        in
-        {
-          default = naerskLib.buildPackage {
-            src = ./.;
-          };
-        }
-      );
-      devShells = eachSystem (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          naerskLib = pkgs.callPackage naersk { };
-        in
-        {
-          buildInputs = with pkgs; [
-            cargo
-            rustc
-            rustfmt
-            clippy
-            rust-analyzer
-            glib
-            nixfmt-rfc-style
-          ];
-          # nativeBuildInputs = [ pkgs.pkg-config ];
-          env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-        }
-      );
-    };
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = (import nixpkgs) { inherit system; };
+        naersk' = pkgs.callPackage naersk {};
+      in
+      rec {
+        defaultPackage = naersk'.buildPackage {
+          src = ./.;
+        };
+        devShell = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [rustc cargo rustfmt rust-analyzer nixfmt-rfc-style];
+        };
+      }
+    );
 }
