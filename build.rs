@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::env;
+use std::process::Command;
 
 struct Git;
 
@@ -35,7 +35,6 @@ fn build_revision() -> String {
     if let Ok(commit_hash) = Git::rev_parse() {
         return commit_hash;
     }
-
 
     return String::from("unkonwn");
 }

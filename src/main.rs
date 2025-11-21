@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate rocket;
 use dashmap::DashMap;
-use lazy_static::lazy_static;
+use rocket::State;
 use rocket::http::Status;
 use rocket::response::content::RawHtml;
 use rocket::{Request, response::Redirect};
@@ -11,6 +11,7 @@ use tera::Context;
 
 mod bible;
 mod erv;
+mod images;
 mod kjv;
 mod templates;
 mod web;
@@ -18,10 +19,6 @@ mod web;
 use bible::Bible;
 
 use templates::TEMPLATES;
-
-const LOGO_SVG: &str = include_str!("./logo.svg");
-const LOGO_PNG: &[u8] = include_bytes!("./logo.png");
-const LOGO_ICO: &[u8] = include_bytes!("./logo.ico");
 
 #[derive(Serialize, Deserialize)]
 enum Version {
@@ -32,59 +29,53 @@ enum Version {
 
 const VERSION: Version = Version::Web;
 
-lazy_static! {
-    static ref BIBLE: Bible = match VERSION {
-        Version::Kjv => kjv::load(),
-        Version::Erv => erv::load(),
-        Version::Web => web::load(),
-    };
-    static ref CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
-    static ref COMMIT_HASH: String = {
-        match std::env::var("COMMIT_HASH") {
-            Ok(var) => var,
-            Err(_) => String::from("[UNKNOWN]"),
+struct AppState {
+    commit_hash: String,
+    bible: Bible,
+    cache: Arc<DashMap<String, String>>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            commit_hash: match std::env::var("COMMIT_HASH") {
+                Ok(var) => var,
+                Err(_) => String::from("[UNKNOWN]"),
+            },
+            cache: Arc::new(DashMap::new()),
+            bible: match VERSION {
+                Version::Kjv => kjv::load(),
+                Version::Erv => erv::load(),
+                Version::Web => web::load(),
+            },
         }
-    };
+    }
 }
 
 #[get("/")]
-fn index() -> Redirect {
-    Redirect::to(uri!(books(BIBLE.order[0].clone())))
-}
-
-#[get("/favicon.svg")]
-fn favicon_svg() -> &'static str {
-    LOGO_SVG
-}
-
-#[get("/favicon.png")]
-fn favicon_png() -> &'static [u8] {
-    LOGO_PNG
-}
-
-#[get("/favicon.ico")]
-fn favicon_ico() -> &'static [u8] {
-    LOGO_ICO
+fn index(state: &State<AppState>) -> Redirect {
+    Redirect::to(uri!(books(state.bible.order[0].clone())))
 }
 
 #[get("/book/<book_name>")]
-fn books(book_name: &str) -> Result<RawHtml<String>, Redirect> {
-    let Some(book) = BIBLE.get(book_name) else {
+fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Redirect> {
+    let Some(book) = state.bible.get(book_name) else {
         return Err(Redirect::to(uri!("/")));
     };
     let key = String::from(book_name);
     Ok(RawHtml(
-        CACHE
+        state
+            .cache
             .entry(key)
             .or_insert_with(|| {
                 let mut context = Context::new();
                 context.insert("book", book_name);
-                context.insert("prev_book", &BIBLE.previous(book_name));
-                context.insert("next_book", &BIBLE.next(book_name));
+                context.insert("prev_book", &state.bible.previous(book_name));
+                context.insert("next_book", &state.bible.next(book_name));
                 context.insert("paragraphs", &book.paragraphs());
-                context.insert("books", &BIBLE.order);
+                context.insert("books", &state.bible.order);
                 context.insert("version", &VERSION);
-                context.insert("commit_hash", &COMMIT_HASH.as_str());
+                context.insert("commit_hash", &state.commit_hash.as_str());
                 TEMPLATES.render("book.html", &context).unwrap()
             })
             .value()
@@ -93,9 +84,9 @@ fn books(book_name: &str) -> Result<RawHtml<String>, Redirect> {
 }
 
 #[get("/.info")]
-fn cache() -> RawHtml<String> {
+fn info(state: &State<AppState>) -> RawHtml<String> {
     let mut context = Context::new();
-    context.insert("entries", &CACHE.len());
+    context.insert("entries", &state.cache.len());
     RawHtml(TEMPLATES.render("info.html", &context).unwrap())
 }
 
@@ -108,8 +99,16 @@ fn default_catcher(_: Status, _: &Request) -> Redirect {
 fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![default_catcher])
+        .manage(AppState::default())
         .mount(
             "/",
-            routes![index, books, cache, favicon_svg, favicon_png, favicon_ico],
+            routes![
+                index,
+                books,
+                info,
+                images::favicon_svg,
+                images::favicon_png,
+                images::favicon_ico
+            ],
         )
 }
