@@ -14,6 +14,8 @@ lazy_static! {
             .unwrap();
         tera.add_raw_template("title.html", include_str!("./title.html"))
             .unwrap();
+        tera.add_raw_template("wallets.html", include_str!("./wallets.html"))
+            .unwrap();
         tera
     };
 }

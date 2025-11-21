@@ -1,25 +1,32 @@
-#[macro_use]
-extern crate rocket;
-use dashmap::DashMap;
-use rocket::State;
-use rocket::http::Status;
-use rocket::response::content::RawHtml;
-use rocket::{Request, response::Redirect};
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::sync::Arc;
-use tera::Context;
-
 mod bible;
-mod erv;
+
 mod images;
-mod kjv;
 mod templates;
+
+mod erv;
+mod kjv;
 mod web;
 
 use bible::Bible;
 
 use templates::TEMPLATES;
+
+#[macro_use]
+extern crate rocket;
+
+use std::env;
+use std::sync::Arc;
+
+use dashmap::DashMap;
+
+use rocket::State;
+use rocket::http::Status;
+use rocket::response::content::RawHtml;
+use rocket::{Request, response::Redirect};
+
+use serde::{Deserialize, Serialize};
+
+use tera::Context;
 
 #[derive(Serialize, Deserialize)]
 enum Version {
@@ -63,11 +70,11 @@ fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Re
     let Some(book) = state.bible.get(book_name) else {
         return Err(Redirect::to(uri!("/")));
     };
-    let key = String::from(book_name);
+
     Ok(RawHtml(
         state
             .cache
-            .entry(key)
+            .entry(String::from(book_name))
             .or_insert_with(|| {
                 let mut context = Context::new();
                 context.insert("book", book_name);
@@ -79,6 +86,7 @@ fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Re
                 context.insert("commit_hash", &state.commit_hash.as_str());
                 context.insert("bit_addr", &env::var("BIT_ADDR").ok());
                 context.insert("eth_addr", &env::var("ETH_ADDR").ok());
+                context.insert("xmr_addr", &env::var("XMR_ADDR").ok());
                 TEMPLATES.render("book.html", &context).unwrap()
             })
             .value()

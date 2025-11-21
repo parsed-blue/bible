@@ -45,7 +45,13 @@
         </section>
         <div class="background-warning-500 color-black padding-s font-weight-bold flex flex-row">
             <span class="text-transform-uppercase">{{version}}</span>
-            <span class="flex-1 text-align-center">{{commit_hash}}</span>
+            <span class="flex-1 text-align-center">
+                {% if bit_addr or eth_addr or xmr_addr %}
+                {% include "wallets.html" %}
+                {% else %}
+                {{commit_hash}}
+                {% endif %}
+            </span>
             <span><a href="/.info">info</a></span>
         </div>
         <script type="module">
@@ -55,7 +61,8 @@ If you opened this up, maybe you'd be interested in helping out!
 Here's the:
 Github: https://github.com/parsed-blue/bible{% if bit_addr or eth_addr %}
 {% if bit_addr %}Bitcoin address: {{bit_addr}}{% endif %}
-{% if eth_addr %}Ethereum address: {{eth_addr}}{% endif %}{% endif %}`);
+{% if eth_addr %}Ethereum address: {{eth_addr}}{% endif %}
+{% if xmr_addr %}Monero address: {{xmr_addr}}{% endif %}{% endif %}`);
         </script>
     </body>
 </html>
