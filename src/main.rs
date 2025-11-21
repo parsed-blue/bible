@@ -2,9 +2,9 @@
 extern crate rocket;
 use dashmap::DashMap;
 use lazy_static::lazy_static;
-use rocket::{Request, response::Redirect};
 use rocket::http::Status;
 use rocket::response::content::RawHtml;
+use rocket::{Request, response::Redirect};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tera::Context;
@@ -39,6 +39,12 @@ lazy_static! {
         Version::Web => web::load(),
     };
     static ref CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
+    static ref COMMIT_HASH: String = {
+        match std::env::var("COMMIT_HASH") {
+            Ok(var) => var,
+            Err(_) => String::from("[UNKNOWN]"),
+        }
+    };
 }
 
 #[get("/")]
@@ -78,6 +84,7 @@ fn books(book_name: &str) -> Result<RawHtml<String>, Redirect> {
                 context.insert("paragraphs", &book.paragraphs());
                 context.insert("books", &BIBLE.order);
                 context.insert("version", &VERSION);
+                context.insert("commit_hash", &COMMIT_HASH.as_str());
                 TEMPLATES.render("book.html", &context).unwrap()
             })
             .value()
@@ -102,7 +109,7 @@ fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![default_catcher])
         .mount(
-        "/",
-        routes![index, books, cache, favicon_svg, favicon_png, favicon_ico],
-    )
+            "/",
+            routes![index, books, cache, favicon_svg, favicon_png, favicon_ico],
+        )
 }

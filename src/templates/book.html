@@ -44,8 +44,9 @@
             {% include "title.html" %}
         </section>
         <div class="background-warning-500 color-black padding-s font-weight-bold flex flex-row">
-            <span>{{version}}</span>
-            <span class="flex-1 text-align-right"><a href="/.info">info</a></span>
+            <span class="text-transform-uppercase">{{version}}</span>
+            <span class="flex-1 text-align-center">{{commit_hash}}</span>
+            <span><a href="/.info">info</a></span>
         </div>
         <script type="module">
             console.log(`
