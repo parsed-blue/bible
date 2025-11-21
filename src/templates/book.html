@@ -3,11 +3,17 @@
     <head>
         <title>Bible • {{ book | capitalize }}</title>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="https://unpkg.com/turretcss/dist/turretcss.min.css" crossorigin="anonymous">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="icon" href="/favicon.png" type="image/png">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/turretcss/dist/turretcss.min.css" crossorigin="anonymous">
+        <style>
+.chapter li::marker {
+    color: #f50; /* var(--warning-500) */
+}
+        </style>
     </head>
     <body class="background-black color-white">
         <div class="background-warning-500 padding-top-xxs"></div>
@@ -18,15 +24,18 @@
         </section>
         <main class="container max-width-m">
             {% for paragraph in paragraphs %}
-            <h3 id="chapter-{{paragraph[0].chapter}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#chapter-{{paragraph[0].chapter}}">{{paragraph[0].chapter}}</a></span></h3>
-            <div class="line-height-xl text-align-justify">
-            {% for verse in paragraph %}
-            <p id="verse-{{verse.chapter}}:{{verse.section}}">
-                <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a style="text-decoration:none;" href="#verse-{{verse.chapter}}:{{verse.section}}">{{verse.section}}</a></mark>
-                {{ verse.text }}
-            </p>
-            {% endfor %}
-            </div>
+            <h3 id="c{{paragraph[0].chapter}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#c{{paragraph[0].chapter}}">{{paragraph[0].chapter}}</a></span></h3>
+            <ol class="chapter line-height-xl text-align-justify">
+                {% for verse in paragraph %}
+                <li id="v{{verse.chapter}}:{{verse.section}}">
+                    <!-- <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a style="text-decoration:none;" href="#v{{verse.chapter}}:{{verse.section}}">{{verse.section}}</a></mark> -->
+                    {{ verse.text }}
+                    <a class="color-primary-700 font-size-xxs" style="text-decoration:none" href="#v{{verse.chapter}}:{{verse.section}}">
+                        [ref]
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
             {% endfor %}
         </main>
         <section class="container max-width-m">
@@ -38,5 +47,12 @@
             <span>{{version}}</span>
             <span class="flex-1 text-align-right"><a href="/.info">info</a></span>
         </div>
+        <script type="module">
+            console.log(`
+Hey there!
+If you opened this up, maybe you'd be interested in donating!
+Here's my Bitcoin wallet address: 
+`);
+        </script>
     </body>
 </html>
