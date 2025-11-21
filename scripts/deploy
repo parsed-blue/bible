@@ -1,0 +1,6 @@
+#!/bin/bash
+
+
+set -xe
+
+ssh sovereign nvim -l deploy.lua
