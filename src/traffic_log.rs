@@ -5,15 +5,21 @@ use rocket::{
 };
 use serde_json::json;
 use std::fs::OpenOptions;
-use std::sync::mpsc;
 use std::io::Write;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc;
+use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::{env, time::Duration};
 
 struct MemoryLog {
     control: Sender<Control>,
     data: Sender<String>,
+}
+
+#[derive(Debug)]
+enum LogError {
+    CouldNotOpenFile,
+    CouldNotWriteToFile
 }
 
 enum Control {
@@ -31,35 +37,40 @@ impl MemoryLog {
             eprintln!("could not publish message {:?}", err);
         }
     }
-    pub fn new() -> MemoryLog {
-        let (control_tx, control_rx) = mpsc::channel::<Control>();
-        let (data_tx, data_rx) = mpsc::channel::<String>();
-
-        thread::spawn(move || {
+    pub fn loop_logic(data_rx: Receiver<String>, control_rx: Receiver<Control>) -> Result<(), LogError> {
             let Ok(mut file) = OpenOptions::new()
                 .append(true)
                 .create(true)
                 .open("access.jsonl")
             else {
-                return;
+                return Err(LogError::CouldNotOpenFile);
             };
+
             loop {
                 if let Ok(control) = control_rx.try_recv() {
                     match control {
                         Control::Halt => {
-                            break;
+                            return Ok(());
                         }
                     }
                 }
 
                 if let Ok(data) = data_rx.try_recv() {
                     let Ok(()) = writeln!(file, "{}", data) else {
-                        return;
+                        return Err(LogError::CouldNotWriteToFile);
                     };
                 }
 
-                thread::sleep(Duration::from_millis(100));
+                thread::sleep(Duration::from_millis(10));
             }
+    }
+    pub fn new() -> MemoryLog {
+        let (control_tx, control_rx) = mpsc::channel::<Control>();
+        let (data_tx, data_rx) = mpsc::channel::<String>();
+
+        thread::spawn(move || match MemoryLog::loop_logic(data_rx, control_rx) {
+            Ok(_) => println!("loop closed successfully"),
+            Err(e) => eprintln!("Loop closed with an issue: {:?}", e),
         });
 
         MemoryLog {
