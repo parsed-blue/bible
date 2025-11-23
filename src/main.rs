@@ -2,6 +2,7 @@ mod bible;
 
 mod images;
 mod templates;
+mod traffic_log;
 
 mod erv;
 mod kjv;
@@ -110,6 +111,7 @@ fn default_catcher(_: Status, _: &Request) -> Redirect {
 fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![default_catcher])
+        .attach(traffic_log::TrafficLog::default())
         .manage(AppState::default())
         .mount(
             "/",
