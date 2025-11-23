@@ -131,7 +131,7 @@ impl Fairing for TrafficLog {
     async fn on_response<'r>(&self, request: &'r Request<'_>, _response: &mut Response<'r>) {
         let user_agent = request.headers().get_one("User-Agent").unwrap_or("");
         let user_ip = request
-            .real_ip()
+            .client_ip()
             .map(|ip| ip.to_string())
             .unwrap_or_else(|| "unknown".to_string());
         let path = request.uri().path().as_str();
