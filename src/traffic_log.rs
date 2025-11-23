@@ -21,13 +21,17 @@ enum Control {
 }
 
 impl MemoryLog {
-    fn close(&self) {
-        self.control.send(Control::Halt).unwrap();
+    pub fn close(&self) {
+        if let Err(err) = self.control.send(Control::Halt) {
+            eprintln!("could not publish control message {:?}", err);
+        }
     }
-    fn publish(&self, data: String) {
-        self.data.send(data).unwrap();
+    pub fn publish(&self, data: String) {
+        if let Err(err) = self.data.send(data) {
+            eprintln!("could not publish message {:?}", err);
+        }
     }
-    fn new() -> MemoryLog {
+    pub fn new() -> MemoryLog {
         let (control_tx, control_rx) = mpsc::channel::<Control>();
         let (data_tx, data_rx) = mpsc::channel::<String>();
 
