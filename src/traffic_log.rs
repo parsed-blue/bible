@@ -4,10 +4,70 @@ use rocket::{
     fairing::{Fairing, Info, Kind},
 };
 use serde_json::json;
-use std::env;
+use std::fs::OpenOptions;
+use std::sync::mpsc;
+use std::io::Write;
+use std::sync::mpsc::Sender;
+use std::thread;
+use std::{env, time::Duration};
+
+struct MemoryLog {
+    control: Sender<Control>,
+    data: Sender<String>,
+}
+
+enum Control {
+    Halt,
+}
+
+impl MemoryLog {
+    fn close(&self) {
+        self.control.send(Control::Halt).unwrap();
+    }
+    fn publish(&self, data: String) {
+        self.data.send(data).unwrap();
+    }
+    fn new() -> MemoryLog {
+        let (control_tx, control_rx) = mpsc::channel::<Control>();
+        let (data_tx, data_rx) = mpsc::channel::<String>();
+
+        thread::spawn(move || {
+            let Ok(mut file) = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open("access.jsonl")
+            else {
+                return;
+            };
+            loop {
+                if let Ok(control) = control_rx.try_recv() {
+                    match control {
+                        Control::Halt => {
+                            break;
+                        }
+                    }
+                }
+
+                if let Ok(data) = data_rx.try_recv() {
+                    let Ok(()) = writeln!(file, "{}", data) else {
+                        return;
+                    };
+                }
+
+                thread::sleep(Duration::from_millis(100));
+            }
+        });
+
+        MemoryLog {
+            control: control_tx,
+            data: data_tx,
+        }
+    }
+}
 
 pub struct TrafficLog {
     client: Option<Client>,
+    memory: MemoryLog,
 }
 
 impl Default for TrafficLog {
@@ -20,23 +80,26 @@ impl Default for TrafficLog {
             println!("Redis client initialized successfully");
         }
 
-        Self { client }
+        Self {
+            client,
+            memory: MemoryLog::new(),
+        }
     }
 }
 
 impl TrafficLog {
     fn log(&self, user_agent: &str, user_ip: &str, path: &str, method: &str) {
+        let log_data = json!({
+            "user_agent": user_agent,
+            "user_ip": user_ip,
+            "path": path,
+            "method": method,
+        });
         if let Some(client) = self.client.as_ref() {
             let mut conn = client.get_connection().unwrap();
-
-            let log_data = json!({
-                "user_agent": user_agent,
-                "user_ip": user_ip,
-                "path": path,
-                "method": method,
-            });
-
             let _: () = conn.publish("log", log_data.to_string()).unwrap();
+        } else {
+            self.memory.publish(log_data.to_string());
         }
     }
 }
