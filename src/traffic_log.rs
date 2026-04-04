@@ -13,6 +13,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::{env, time::Duration};
+use tracing::{error, info, warn};
 
 struct MemoryLog {
     control: Sender<Control>,
@@ -32,12 +33,12 @@ enum Control {
 impl MemoryLog {
     pub fn close(&self) {
         if let Err(err) = self.control.send(Control::Halt) {
-            eprintln!("could not publish control message {:?}", err);
+            error!("could not publish control message {:?}", err);
         }
     }
     pub fn publish(&self, data: String) {
         if let Err(err) = self.data.send(data) {
-            eprintln!("could not publish message {:?}", err);
+            error!("could not publish message {:?}", err);
         }
     }
     pub fn loop_logic(
@@ -75,8 +76,8 @@ impl MemoryLog {
         let (data_tx, data_rx) = mpsc::channel::<String>();
 
         thread::spawn(move || match MemoryLog::loop_logic(data_rx, control_rx) {
-            Ok(_) => println!("loop closed successfully"),
-            Err(e) => eprintln!("Loop closed with an issue: {:?}", e),
+            Ok(_) => info!("memory log loop closed successfully"),
+            Err(e) => error!("memory log loop closed with an issue: {:?}", e),
         });
 
         MemoryLog {
@@ -101,7 +102,9 @@ impl Default for TrafficLog {
             .and_then(|redis_url| Client::open(redis_url).ok());
 
         if client.is_some() {
-            println!("Redis client initialized successfully");
+            info!("Redis client initialized successfully");
+        } else {
+            info!("No REDIS_URL set, falling back to file-based logging");
         }
 
         Self(Arc::new(TrafficLogInner {
@@ -123,6 +126,7 @@ impl TrafficLog {
             if let Ok(mut conn) = client.get_connection() {
                 let _: Result<(), _> = conn.publish("log", log_data.to_string());
             } else {
+                warn!("Redis connection failed, falling back to file-based logging");
                 self.0.memory.publish(log_data.to_string());
             }
         } else {
@@ -157,6 +161,17 @@ pub async fn track_traffic(req: Request, next: Next) -> impl IntoResponse {
     let traffic_log = req.extensions().get::<TrafficLog>().cloned();
 
     let response = next.run(req).await;
+
+    let status = response.status().as_u16();
+
+    info!(
+        method = %method,
+        path = %path,
+        status = status,
+        ip = %user_ip,
+        user_agent = %user_agent,
+        "request"
+    );
 
     if let Some(log) = traffic_log {
         log.log(&user_agent, &user_ip, &path, &method);

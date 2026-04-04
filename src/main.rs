@@ -15,6 +15,9 @@ use templates::TEMPLATES;
 use std::env;
 use std::sync::Arc;
 
+use tracing::info;
+use tracing_subscriber::{EnvFilter, fmt};
+
 use dashmap::DashMap;
 
 use axum::{
@@ -109,6 +112,12 @@ async fn fallback() -> Redirect {
 
 #[tokio::main]
 async fn main() {
+    fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
+
     let app_state = Arc::new(AppState::default());
     let traffic_log = traffic_log::TrafficLog::default();
 
@@ -133,7 +142,7 @@ async fn main() {
         .unwrap();
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
-    println!("Listening on http://{}", addr);
+    info!("Listening on http://{}", addr);
 
     axum::serve(
         listener,
