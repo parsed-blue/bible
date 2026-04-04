@@ -1,43 +1,84 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Verse {
-    pub book: String,
-    pub chapter: usize,
-    pub section: usize,
+    pub book: BookName,
+    pub chapter: Chapter,
+    pub section: Section,
     pub text: String,
 }
 
-pub type BookName = String;
-type Section = usize;
-type Chapter = usize;
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct BookSlug(pub String);
+
+impl fmt::Display for BookSlug {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct BookName(pub String);
+
+impl BookName {
+    pub fn slug(&self) -> BookSlug {
+        BookSlug(self.0.clone().replace(" ", "-"))
+    }
+}
+
+impl fmt::Display for BookName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize, PartialOrd, Ord, Copy)]
+pub struct Section(pub usize);
+
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize, PartialOrd, Ord, Copy)]
+pub struct Chapter(pub usize);
 
 #[derive(Debug)]
 pub struct Bible {
-    pub order: Vec<BookName>,
-    pub books: HashMap<String, Book>,
+    pub order: Vec<BookSlug>,
+    pub books: HashMap<BookSlug, Book>,
 }
 
 impl Bible {
-    pub fn get(&self, book: &str) -> Option<&Book> {
+    pub fn book_names(&self) -> Vec<(BookName, BookSlug)> {
+        self.order
+            .iter()
+            .map(|slug| {
+                let book = self.books.get(slug).expect("");
+                (book.name.clone(), slug.clone())
+            })
+            .collect()
+    }
+
+    pub fn get(&self, book: &BookSlug) -> Option<&Book> {
         self.books.get(book)
     }
 
-    pub fn previous(&self, book: &str) -> Option<&BookName> {
+    pub fn previous(&self, book: &BookSlug) -> Option<(&BookName, &BookSlug)> {
         for c in 0..self.order.len() {
-            if self.order.get(c + 1).map(|s| s.as_str()) == Some(book) {
-                return self.order.get(c);
+            if self.order.get(c + 1) == Some(book) {
+                let prev = self.order.get(c).unwrap();
+                let book = self.books.get(prev).unwrap();
+                return Some((&book.name, prev));
             }
         }
 
         None
     }
 
-    pub fn next(&self, book: &str) -> Option<&BookName> {
+    pub fn next(&self, book: &BookSlug) -> Option<(&BookName, &BookSlug)> {
         for c in (1..self.order.len()).rev() {
-            if self.order.get(c - 1).map(|s| s.as_str()) == Some(book) {
-                return self.order.get(c);
+            if self.order.get(c - 1) == Some(book) {
+                let next = self.order.get(c).unwrap();
+                let book = self.books.get(next).unwrap();
+                return Some((&book.name, next));
             }
         }
 
@@ -67,8 +108,8 @@ impl Book {
             for (section, text) in sections.iter() {
                 verses.push(Verse {
                     book: self.name.clone(),
-                    chapter: *chapter,
-                    section: *section,
+                    chapter: chapter.clone(),
+                    section: section.clone(),
                     text: text.clone(),
                 })
             }

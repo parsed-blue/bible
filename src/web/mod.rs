@@ -1,4 +1,4 @@
-use crate::bible::{Bible, Book, BookName, Verse};
+use crate::bible::{Bible, Book, BookName, BookSlug, Chapter, Section, Verse};
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -20,25 +20,25 @@ pub fn load() -> Bible {
             let section = &caps["section"].parse::<usize>().unwrap();
             let text = String::from(&caps["text"]);
             Verse {
-                book: book.clone(),
-                chapter: *chapter,
-                section: *section,
+                book: BookName(book.clone()),
+                chapter: Chapter(*chapter),
+                section: Section(*section),
                 text,
             }
         })
         .collect();
 
-    let mut order: Vec<BookName> = vec![];
+    let mut order: Vec<BookSlug> = vec![];
 
-    let mut books: HashMap<BookName, Book> = HashMap::new();
+    let mut books: HashMap<BookSlug, Book> = HashMap::new();
 
     for verse in verses.iter() {
-        if order.last() != Some(&verse.book) {
-            order.push(verse.book.clone());
+        if order.last() != Some(&verse.book.slug()) {
+            order.push(verse.book.slug().clone());
         }
 
         let book = books
-            .entry(verse.book.clone())
+            .entry(verse.book.slug().clone())
             .or_insert_with(|| Book::new(verse.book.clone()));
         let chapter = book.chapters.entry(verse.chapter).or_default();
         chapter.insert(verse.section, verse.text.clone());

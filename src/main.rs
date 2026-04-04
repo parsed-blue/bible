@@ -32,6 +32,8 @@ use serde::{Deserialize, Serialize};
 
 use tera::Context;
 
+use crate::bible::{BookName, BookSlug};
+
 #[derive(Serialize, Deserialize)]
 enum Version {
     Kjv,
@@ -44,7 +46,7 @@ const VERSION: Version = Version::Web;
 struct AppState {
     commit_hash: String,
     bible: Bible,
-    cache: Arc<DashMap<String, String>>,
+    cache: Arc<DashMap<BookSlug, String>>,
 }
 
 impl Default for AppState {
@@ -70,24 +72,24 @@ async fn index(State(state): State<Arc<AppState>>) -> Redirect {
 }
 
 async fn books(
-    Path(book_name): Path<String>,
+    Path(book_slug): Path<BookSlug>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Html<String>, Redirect> {
-    let Some(book) = state.bible.get(&book_name) else {
+    let Some(book) = state.bible.get(&book_slug) else {
         return Err(Redirect::to("/"));
     };
 
     Ok(Html(
         state
             .cache
-            .entry(book_name.clone())
+            .entry(book_slug.clone())
             .or_insert_with(|| {
                 let mut context = Context::new();
-                context.insert("book", &book_name);
-                context.insert("prev_book", &state.bible.previous(&book_name));
-                context.insert("next_book", &state.bible.next(&book_name));
+                context.insert("book", &book.name);
+                context.insert("prev_book", &state.bible.previous(&book_slug));
+                context.insert("next_book", &state.bible.next(&book_slug));
                 context.insert("paragraphs", &book.paragraphs());
-                context.insert("books", &state.bible.order);
+                context.insert("books", &state.bible.book_names());
                 context.insert("version", &VERSION);
                 context.insert("commit_hash", &state.commit_hash.as_str());
                 context.insert("bit_addr", &env::var("BIT_ADDR").ok());
