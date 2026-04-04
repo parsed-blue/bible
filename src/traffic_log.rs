@@ -145,7 +145,8 @@ pub async fn track_traffic(req: Request, next: Next) -> impl IntoResponse {
 
     let user_ip = req
         .headers()
-        .get("x-real-ip")
+        .get("cf-connecting-ip")
+        .or_else(|| req.headers().get("x-real-ip"))
         .and_then(|v| v.to_str().ok())
         .map(|v| v.to_string())
         .unwrap_or_else(|| {
