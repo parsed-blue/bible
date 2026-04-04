@@ -137,7 +137,7 @@ async fn main() {
         .or_else(|_| env::var("PORT"))
         .unwrap_or_else(|_| "8000".to_string());
 
-    let addr = format!("0.0.0.0:{}", port)
+    let addr = format!("127.0.0.1:{}", port)
         .parse::<std::net::SocketAddr>()
         .unwrap();
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
