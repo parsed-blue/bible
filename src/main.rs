@@ -12,18 +12,18 @@ use bible::Bible;
 
 use templates::TEMPLATES;
 
-#[macro_use]
-extern crate rocket;
-
 use std::env;
 use std::sync::Arc;
 
 use dashmap::DashMap;
 
-use rocket::State;
-use rocket::http::Status;
-use rocket::response::content::RawHtml;
-use rocket::{Request, response::Redirect};
+use axum::{
+    Router,
+    extract::{Path, State},
+    middleware,
+    response::{Html, Redirect},
+    routing::get,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -61,26 +61,28 @@ impl Default for AppState {
     }
 }
 
-#[get("/")]
-fn index(state: &State<AppState>) -> Redirect {
-    Redirect::to(uri!(books(state.bible.order[0].clone())))
+async fn index(State(state): State<Arc<AppState>>) -> Redirect {
+    let first_book = state.bible.order[0].clone();
+    Redirect::to(&format!("/book/{}", first_book))
 }
 
-#[get("/book/<book_name>")]
-fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Redirect> {
-    let Some(book) = state.bible.get(book_name) else {
-        return Err(Redirect::to(uri!("/")));
+async fn books(
+    Path(book_name): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Html<String>, Redirect> {
+    let Some(book) = state.bible.get(&book_name) else {
+        return Err(Redirect::to("/"));
     };
 
-    Ok(RawHtml(
+    Ok(Html(
         state
             .cache
-            .entry(String::from(book_name))
+            .entry(book_name.clone())
             .or_insert_with(|| {
                 let mut context = Context::new();
-                context.insert("book", book_name);
-                context.insert("prev_book", &state.bible.previous(book_name));
-                context.insert("next_book", &state.bible.next(book_name));
+                context.insert("book", &book_name);
+                context.insert("prev_book", &state.bible.previous(&book_name));
+                context.insert("next_book", &state.bible.next(&book_name));
                 context.insert("paragraphs", &book.paragraphs());
                 context.insert("books", &state.bible.order);
                 context.insert("version", &VERSION);
@@ -95,33 +97,48 @@ fn books(book_name: &str, state: &State<AppState>) -> Result<RawHtml<String>, Re
     ))
 }
 
-#[get("/.info")]
-fn info(state: &State<AppState>) -> RawHtml<String> {
+async fn info(State(state): State<Arc<AppState>>) -> Html<String> {
     let mut context = Context::new();
     context.insert("entries", &state.cache.len());
-    RawHtml(TEMPLATES.render("info.html", &context).unwrap())
+    Html(TEMPLATES.render("info.html", &context).unwrap())
 }
 
-#[catch(default)]
-fn default_catcher(_: Status, _: &Request) -> Redirect {
-    Redirect::to(uri!("/"))
+async fn fallback() -> Redirect {
+    Redirect::to("/")
 }
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        .register("/", catchers![default_catcher])
-        .attach(traffic_log::TrafficLog::default())
-        .manage(AppState::default())
-        .mount(
-            "/",
-            routes![
-                index,
-                books,
-                info,
-                images::favicon_svg,
-                images::favicon_png,
-                images::favicon_ico
-            ],
-        )
+#[tokio::main]
+async fn main() {
+    let app_state = Arc::new(AppState::default());
+    let traffic_log = traffic_log::TrafficLog::default();
+
+    let app = Router::new()
+        .route("/", get(index))
+        .route("/book/:book_name", get(books))
+        .route("/.info", get(info))
+        .route("/favicon.svg", get(images::favicon_svg))
+        .route("/favicon.png", get(images::favicon_png))
+        .route("/favicon.ico", get(images::favicon_ico))
+        .fallback(fallback)
+        .layer(middleware::from_fn(traffic_log::track_traffic))
+        .layer(axum::Extension(traffic_log))
+        .with_state(app_state);
+
+    let port = env::var("ROCKET_PORT")
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8000".to_string());
+
+    let addr = format!("0.0.0.0:{}", port)
+        .parse::<std::net::SocketAddr>()
+        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    println!("Listening on http://{}", addr);
+
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

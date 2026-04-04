@@ -1,13 +1,16 @@
-use redis::{Client, Commands};
-use rocket::{
-    Request, Response,
-    fairing::{Fairing, Info, Kind},
+use axum::{
+    extract::{ConnectInfo, Request},
+    middleware::Next,
+    response::IntoResponse,
 };
+use redis::{Client, Commands};
 use serde_json::json;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::net::SocketAddr;
+use std::sync::Arc;
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::{env, time::Duration};
 
@@ -19,7 +22,7 @@ struct MemoryLog {
 #[derive(Debug)]
 enum LogError {
     CouldNotOpenFile,
-    CouldNotWriteToFile
+    CouldNotWriteToFile,
 }
 
 enum Control {
@@ -37,32 +40,35 @@ impl MemoryLog {
             eprintln!("could not publish message {:?}", err);
         }
     }
-    pub fn loop_logic(data_rx: Receiver<String>, control_rx: Receiver<Control>) -> Result<(), LogError> {
-            let Ok(mut file) = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open("access.jsonl")
-            else {
-                return Err(LogError::CouldNotOpenFile);
-            };
+    pub fn loop_logic(
+        data_rx: Receiver<String>,
+        control_rx: Receiver<Control>,
+    ) -> Result<(), LogError> {
+        let Ok(mut file) = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open("access.jsonl")
+        else {
+            return Err(LogError::CouldNotOpenFile);
+        };
 
-            loop {
-                if let Ok(control) = control_rx.try_recv() {
-                    match control {
-                        Control::Halt => {
-                            return Ok(());
-                        }
+        loop {
+            if let Ok(control) = control_rx.try_recv() {
+                match control {
+                    Control::Halt => {
+                        return Ok(());
                     }
                 }
-
-                if let Ok(data) = data_rx.try_recv() {
-                    let Ok(()) = writeln!(file, "{}", data) else {
-                        return Err(LogError::CouldNotWriteToFile);
-                    };
-                }
-
-                thread::sleep(Duration::from_millis(10));
             }
+
+            if let Ok(data) = data_rx.try_recv() {
+                let Ok(()) = writeln!(file, "{}", data) else {
+                    return Err(LogError::CouldNotWriteToFile);
+                };
+            }
+
+            thread::sleep(Duration::from_millis(10));
+        }
     }
     pub fn new() -> MemoryLog {
         let (control_tx, control_rx) = mpsc::channel::<Control>();
@@ -80,10 +86,13 @@ impl MemoryLog {
     }
 }
 
-pub struct TrafficLog {
+pub struct TrafficLogInner {
     client: Option<Client>,
     memory: MemoryLog,
 }
+
+#[derive(Clone)]
+pub struct TrafficLog(Arc<TrafficLogInner>);
 
 impl Default for TrafficLog {
     fn default() -> Self {
@@ -95,48 +104,63 @@ impl Default for TrafficLog {
             println!("Redis client initialized successfully");
         }
 
-        Self {
+        Self(Arc::new(TrafficLogInner {
             client,
             memory: MemoryLog::new(),
-        }
+        }))
     }
 }
 
 impl TrafficLog {
-    fn log(&self, user_agent: &str, user_ip: &str, path: &str, method: &str) {
+    pub fn log(&self, user_agent: &str, user_ip: &str, path: &str, method: &str) {
         let log_data = json!({
             "user_agent": user_agent,
             "user_ip": user_ip,
             "path": path,
             "method": method,
         });
-        if let Some(client) = self.client.as_ref() {
-            let mut conn = client.get_connection().unwrap();
-            let _: () = conn.publish("log", log_data.to_string()).unwrap();
+        if let Some(client) = self.0.client.as_ref() {
+            if let Ok(mut conn) = client.get_connection() {
+                let _: Result<(), _> = conn.publish("log", log_data.to_string());
+            } else {
+                self.0.memory.publish(log_data.to_string());
+            }
         } else {
-            self.memory.publish(log_data.to_string());
+            self.0.memory.publish(log_data.to_string());
         }
     }
 }
 
-#[rocket::async_trait]
-impl Fairing for TrafficLog {
-    fn info(&self) -> Info {
-        Info {
-            name: "TrafficLog",
-            kind: Kind::Response,
-        }
+pub async fn track_traffic(req: Request, next: Next) -> impl IntoResponse {
+    let user_agent = req
+        .headers()
+        .get("user-agent")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+
+    let user_ip = req
+        .headers()
+        .get("x-real-ip")
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| {
+            req.extensions()
+                .get::<ConnectInfo<SocketAddr>>()
+                .map(|ConnectInfo(addr)| addr.ip().to_string())
+                .unwrap_or_else(|| "unknown".to_string())
+        });
+
+    let path = req.uri().path().to_string();
+    let method = req.method().as_str().to_string();
+
+    let traffic_log = req.extensions().get::<TrafficLog>().cloned();
+
+    let response = next.run(req).await;
+
+    if let Some(log) = traffic_log {
+        log.log(&user_agent, &user_ip, &path, &method);
     }
 
-    async fn on_response<'r>(&self, request: &'r Request<'_>, _response: &mut Response<'r>) {
-        let user_agent = request.headers().get_one("User-Agent").unwrap_or("");
-        let user_ip = request
-            .client_ip()
-            .map(|ip| ip.to_string())
-            .unwrap_or_else(|| "unknown".to_string());
-        let path = request.uri().path().as_str();
-        let method = request.method().as_str();
-
-        self.log(user_agent, &user_ip, path, method);
-    }
+    response
 }

@@ -4,28 +4,38 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     naersk.url = "github:nix-community/naersk";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-utils.url = "github:numtide/flake-utils";
-  };
 
+  };
   outputs =
     {
-      self,
       nixpkgs,
       naersk,
       flake-utils,
+      fenix,
+      ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = (import nixpkgs) { inherit system; };
-        naersk' = pkgs.callPackage naersk {};
+        fenix' = (import fenix { inherit system; });
+        naersk' = pkgs.callPackage naersk { };
       in
-      rec {
+      {
         defaultPackage = naersk'.buildPackage {
           src = ./.;
         };
         devShell = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [rustc cargo rustfmt rust-analyzer nixfmt-rfc-style];
+          packages = with pkgs; [
+            nixfmt-rfc-style
+            fenix'.latest.toolchain
+          ];
+          nativeBuildInputs = [ ];
         };
       }
     );
