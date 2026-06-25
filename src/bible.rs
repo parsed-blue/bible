@@ -7,7 +7,16 @@ pub struct Verse {
     pub book: BookName,
     pub chapter: Chapter,
     pub section: Section,
-    pub text: String,
+    pub text: Text,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Text(pub String);
+
+impl Text {
+    pub fn new(source: &str) -> Text {
+        Text(source.trim().to_string())
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -110,7 +119,7 @@ impl Bible {
 #[derive(Debug)]
 pub struct Book {
     pub name: BookName,
-    pub chapters: BTreeMap<Chapter, BTreeMap<Section, String>>,
+    pub chapters: BTreeMap<Chapter, BTreeMap<Section, Text>>,
 }
 
 impl Book {

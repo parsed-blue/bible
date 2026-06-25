@@ -1,4 +1,4 @@
-use crate::bible::{Bible, BookName, Chapter, Section, Verse};
+use crate::bible::{Bible, BookName, Chapter, Section, Text, Verse};
 use regex::Regex;
 
 const TEXT: &str = include_str!("./erv.txt");
@@ -17,12 +17,12 @@ pub fn load() -> Bible {
             let book = &caps["book"].to_lowercase();
             let chapter = &caps["chapter"].parse::<usize>().unwrap();
             let section = &caps["section"].parse::<usize>().unwrap();
-            let text = String::from(&caps["text"]);
+            let text = &caps["text"];
             Verse {
                 book: BookName(book.clone()),
                 chapter: Chapter(*chapter),
                 section: Section(*section),
-                text,
+                text: Text::new(text),
             }
         })
         .collect();
