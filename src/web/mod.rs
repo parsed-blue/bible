@@ -14,7 +14,7 @@ pub fn load() -> Bible {
     let verses: Vec<Verse> = lines
         .map(|line| {
             let caps = re.captures(line).unwrap();
-            let book = &caps["book"].to_lowercase();
+            let book = &caps["book"].to_string();
             let chapter = &caps["chapter"].parse::<usize>().unwrap();
             let section = &caps["section"].parse::<usize>().unwrap();
             let text = &caps["text"];

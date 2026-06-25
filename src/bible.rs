@@ -122,6 +122,25 @@ pub struct Book {
     pub chapters: BTreeMap<Chapter, BTreeMap<Section, Text>>,
 }
 
+#[derive(Serialize)]
+pub struct BookView {
+    pub title: BookName,
+    pub chapters: Vec<ChapterView>,
+}
+
+#[derive(Serialize)]
+pub struct ChapterView {
+    pub number: Chapter,
+    pub verses: Vec<VerseView>,
+}
+
+#[derive(Serialize)]
+pub struct VerseView {
+    pub number: Section,
+    pub text: Text,
+    pub id: String,
+}
+
 impl Book {
     pub fn new(name: BookName) -> Book {
         Book {
@@ -130,22 +149,27 @@ impl Book {
         }
     }
 
-    pub fn paragraphs(&self) -> Vec<Vec<Verse>> {
-        let mut book: Vec<Vec<Verse>> = vec![];
+    pub fn view(&self) -> BookView {
+        let mut view: BookView = BookView {
+            title: self.name.clone(),
+            chapters: Vec::new(),
+        };
 
         for (chapter, sections) in self.chapters.iter() {
-            let mut verses: Vec<Verse> = vec![];
+            let mut chapter_view = ChapterView {
+                number: *chapter,
+                verses: Vec::new(),
+            };
             for (section, text) in sections.iter() {
-                verses.push(Verse {
-                    book: self.name.clone(),
-                    chapter: chapter.clone(),
-                    section: section.clone(),
+                chapter_view.verses.push(VerseView {
+                    number: *section,
                     text: text.clone(),
+                    id: format!("v{}:{}", chapter.0, section.0),
                 })
             }
-            book.push(verses);
+            view.chapters.push(chapter_view);
         }
 
-        book
+        view
     }
 }

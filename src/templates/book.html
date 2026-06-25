@@ -23,20 +23,7 @@
             {% include "pager.html" %}
         </section>
         <main class="container max-width-m">
-            {% for paragraph in paragraphs %}
-            <h3 id="c{{paragraph[0].chapter}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#c{{paragraph[0].chapter}}">{{paragraph[0].chapter}}</a></span></h3>
-            <ol class="chapter line-height-xl text-align-justify">
-                {% for verse in paragraph %}
-                <li id="v{{verse.chapter}}:{{verse.section}}">
-                    <!-- <mark style="background: transparent;" class="color-warning-500 font-weight-bold border-radius"><a style="text-decoration:none;" href="#v{{verse.chapter}}:{{verse.section}}">{{verse.section}}</a></mark> -->
-                    {{ verse.text }}
-                    <a class="color-primary-200 font-size-xxs" style="text-decoration:none" href="#v{{verse.chapter}}:{{verse.section}}">
-                        [ref]
-                    </a>
-                </li>
-                {% endfor %}
-            </ol>
-            {% endfor %}
+            {% include "content.html" %}
         </main>
         <section class="container max-width-m">
             {% include "pager.html" %}

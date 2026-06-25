@@ -36,7 +36,7 @@ fn build_revision() -> String {
         return commit_hash;
     }
 
-    return String::from("unkonwn");
+    String::from("unkonwn")
 }
 
 fn main() {

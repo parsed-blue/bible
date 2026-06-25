@@ -88,7 +88,7 @@ async fn books(
                 context.insert("book", &book.name);
                 context.insert("prev_book", &state.bible.previous(&book_slug));
                 context.insert("next_book", &state.bible.next(&book_slug));
-                context.insert("paragraphs", &book.paragraphs());
+                context.insert("book_view", &book.view());
                 context.insert("books", &state.bible.book_names());
                 context.insert("version", &VERSION);
                 context.insert("commit_hash", &state.commit_hash.as_str());

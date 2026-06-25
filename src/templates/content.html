@@ -1,0 +1,14 @@
+
+{% for chapter in book_view.chapters %}
+<h3 id="c{{chapter.number}}" class="text-align-center">Chapter <span class="color-warning-500"><a style="text-decoration:none;" href="#c{{chapter.number}}">{{chapter.number}}</a></span></h3>
+<ol class="chapter line-height-xl text-align-justify">
+    {% for verse in chapter.verses %}
+    <li id="{{verse.id}}">
+        {{ verse.text }}
+        <a class="color-primary-200 font-size-xxs" style="text-decoration:none" href="#{{verse.id}}">
+            [ref]
+        </a>
+    </li>
+    {% endfor %}
+</ol>
+{% endfor %}
