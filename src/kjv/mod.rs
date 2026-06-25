@@ -1,6 +1,5 @@
-use crate::bible::{Bible, Book, BookName, BookSlug, Chapter, Section, Verse};
+use crate::bible::{Bible, BookName, Chapter, Section, Verse};
 use regex::Regex;
-use std::collections::HashMap;
 
 const TEXT: &str = include_str!("./kjv.txt");
 const VERSE_PATTERN: &str = r"(?<book>\d?[a-zA-Z]+)(?<chapter>\d+):(?<section>\d+)\s*(?<text>.+)";
@@ -26,21 +25,5 @@ pub fn load() -> Bible {
         })
         .collect();
 
-    let mut order: Vec<BookSlug> = vec![];
-
-    let mut books: HashMap<BookSlug, Book> = HashMap::new();
-
-    for verse in verses.iter() {
-        if order.last() != Some(&verse.book.slug()) {
-            order.push(verse.book.slug().clone());
-        }
-
-        let book = books
-            .entry(verse.book.slug().clone())
-            .or_insert_with(|| Book::new(verse.book.clone()));
-        let chapter = book.chapters.entry(verse.chapter).or_default();
-        chapter.insert(verse.section, verse.text.clone());
-    }
-
-    Bible { order, books }
+    Bible::from_verses(verses)
 }

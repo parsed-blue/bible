@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 
 use tera::Context;
 
-use crate::bible::{BookName, BookSlug};
+use crate::bible::BookSlug;
 
 #[derive(Serialize, Deserialize)]
 enum Version {

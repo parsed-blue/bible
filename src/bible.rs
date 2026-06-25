@@ -47,6 +47,27 @@ pub struct Bible {
 }
 
 impl Bible {
+    pub fn from_verses(verses: Vec<Verse>) -> Bible {
+        let mut order: Vec<BookSlug> = vec![];
+
+        let mut books: HashMap<BookSlug, Book> = HashMap::new();
+
+        for verse in verses.iter() {
+            let slug = verse.book.slug();
+            if order.last() != Some(&slug) {
+                order.push(slug.clone());
+            }
+
+            let book = books
+                .entry(slug.clone())
+                .or_insert_with(|| Book::new(verse.book.clone()));
+            let chapter = book.chapters.entry(verse.chapter).or_default();
+            chapter.insert(verse.section, verse.text.clone());
+        }
+
+        Bible { order, books }
+    }
+
     pub fn book_names(&self) -> Vec<(BookName, BookSlug)> {
         self.order
             .iter()
