@@ -18,6 +18,8 @@ lazy_static! {
             .unwrap();
         tera.add_raw_template("content.html", include_str!("./content.html"))
             .unwrap();
+        tera.add_raw_template("styles.html", include_str!("./styles.html"))
+            .unwrap();
         tera
     };
 }

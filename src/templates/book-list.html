@@ -1,14 +1,10 @@
-<div class="book-list padding-md">
-    <p class="text-align-center">
+<div class="booklist">
+    <p>
         {% for b in book.index %}
-        <span
-            style="white-space: nowrap"
-            class="font-size-s text-transform-capitalize"
-            ><a
-                class="{% if b.display == book.title %}color-warning-500{% endif %}"
-                href="{{b.href|urlencode}}"
-                >{{b.display}}</a
-            ></span
+        <a
+            class="{% if b.display == book.title %}active{% endif %}"
+            href="{{b.href|urlencode}}"
+            >{{b.display}}</a
         >
         {% endfor %}
     </p>

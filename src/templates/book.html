@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
     <head>
         <title>Bible • {{ book.title }}</title>
         <meta charset="UTF-8">
@@ -8,31 +8,26 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="icon" href="/favicon.png" type="image/png">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://unpkg.com/turretcss/dist/turretcss.min.css" crossorigin="anonymous">
-        <style>
-.chapter li::marker {
-    color: #f50; /* var(--warning-500) */
-}
-        </style>
+        {% include "styles.html" %}
     </head>
-    <body class="background-black color-white">
-        <div class="background-warning-500 padding-top-xxs"></div>
-        <section class="container max-width-m">
+    <body>
+        <div class="topbar"></div>
+        <section class="container">
             {% include "title.html" %}
             {% include "book-list.html" %}
             {% include "pager.html" %}
         </section>
-        <main class="container max-width-m">
+        <main class="container">
             {% include "content.html" %}
         </main>
-        <section class="container max-width-m">
+        <section class="container">
             {% include "pager.html" %}
             {% include "book-list.html" %}
             {% include "title.html" %}
         </section>
-        <div class="background-warning-500 color-black padding-s font-weight-bold font-size-xxs flex flex-row align-items-center">
-            <span class="text-transform-uppercase">{{version}}</span>
-            <span class="flex-1 text-align-center">
+        <div class="footer-bar">
+            <span class="version">{{version}}</span>
+            <span class="center">
                 {% if bit_addr or eth_addr or xmr_addr %}
                 {% include "wallets.html" %}
                 {% else %}

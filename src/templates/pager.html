@@ -1,24 +1,16 @@
-<nav class="flex flex-roow flex-align-center margin-top-l margin-bottom-l">
-    <span class="text-align-left flex-1 text-transform-capitalize">
+<nav class="pager">
+    <span class="prev">
         {% if book.prev %}
         <a href="{{book.prev.href|urlencode}}">{{book.prev.display}}</a>
         {% else %}
-        <a
-            style="text-decoration: none"
-            class="color-warning-500 cursor-not-allowed"
-            >the beginning</a
-        >
+        <a class="edge">the beginning</a>
         {% endif %}
     </span>
-    <span class="text-align-right flex-1 text-transform-capitalize">
+    <span class="next">
         {% if book.next %}
         <a href="{{book.next.href|urlencode}}">{{book.next.display}}</a>
         {% else %}
-        <a
-            style="text-decoration: none"
-            class="color-warning-500 cursor-not-allowed"
-            >the end</a
-        >
+        <a class="edge">the end</a>
         {% endif %}
     </span>
 </nav>
