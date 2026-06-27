@@ -36,6 +36,9 @@ use tera::Context;
 use crate::bible::BookSlug;
 use crate::views::BookView;
 
+
+const COMMIT_HASH: Option<&str> = option_env!("COMMIT_HASH");
+
 #[derive(Serialize, Deserialize)]
 enum Version {
     Kjv,
@@ -54,9 +57,11 @@ struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            commit_hash: match std::env::var("COMMIT_HASH") {
-                Ok(var) => var,
-                Err(_) => String::from("[UNKNOWN]"),
+            commit_hash: match COMMIT_HASH {
+                Some(var) => String::from(var),
+                None => {
+                    String::from("<unknown>")
+                },
             },
             cache: Arc::new(DashMap::new()),
             bible: match VERSION {

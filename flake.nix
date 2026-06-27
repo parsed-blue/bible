@@ -26,13 +26,13 @@
         pkgs = (import nixpkgs) { inherit system; };
         fenix' = (import fenix { inherit system; });
         naersk' = pkgs.callPackage naersk { };
-        commitHash = if (self ? rev) then self.rev else "dirty";
+        commitHash = "\"${if (self ? rev) then self.rev else "dirty"}\"";
       in
       {
         defaultPackage = naersk'.buildPackage {
           src = ./.;
           cargoBuildOptions = opts: opts ++ [ 
-            "--config" "env.COMMIT_HASH=${pkgs.lib.escapeShellArg commitHash}" 
+            "--config" "env.BUILD_REVISION=${pkgs.lib.escapeShellArg commitHash}"
           ];
         };
         devShell = pkgs.mkShell {
