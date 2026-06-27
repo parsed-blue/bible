@@ -32,8 +32,12 @@ impl fmt::Display for BookSlug {
 pub struct BookName(pub String);
 
 impl BookName {
+    pub fn new(source: &str) -> BookName {
+        BookName(source.trim().to_string())
+    }
+
     pub fn slug(&self) -> BookSlug {
-        BookSlug(self.0.clone().replace(" ", "-"))
+        BookSlug(self.0.to_lowercase().replace(" ", "-"))
     }
 }
 
@@ -77,16 +81,6 @@ impl Bible {
         Bible { order, books }
     }
 
-    pub fn book_names(&self) -> Vec<(BookName, BookSlug)> {
-        self.order
-            .iter()
-            .map(|slug| {
-                let book = self.books.get(slug).expect("");
-                (book.name.clone(), slug.clone())
-            })
-            .collect()
-    }
-
     pub fn get(&self, book: &BookSlug) -> Option<&Book> {
         self.books.get(book)
     }
@@ -122,54 +116,11 @@ pub struct Book {
     pub chapters: BTreeMap<Chapter, BTreeMap<Section, Text>>,
 }
 
-#[derive(Serialize)]
-pub struct BookView {
-    pub title: BookName,
-    pub chapters: Vec<ChapterView>,
-}
-
-#[derive(Serialize)]
-pub struct ChapterView {
-    pub number: Chapter,
-    pub verses: Vec<VerseView>,
-}
-
-#[derive(Serialize)]
-pub struct VerseView {
-    pub number: Section,
-    pub text: Text,
-    pub id: String,
-}
-
 impl Book {
     pub fn new(name: BookName) -> Book {
         Book {
             name,
             chapters: BTreeMap::new(),
         }
-    }
-
-    pub fn view(&self) -> BookView {
-        let mut view: BookView = BookView {
-            title: self.name.clone(),
-            chapters: Vec::new(),
-        };
-
-        for (chapter, sections) in self.chapters.iter() {
-            let mut chapter_view = ChapterView {
-                number: *chapter,
-                verses: Vec::new(),
-            };
-            for (section, text) in sections.iter() {
-                chapter_view.verses.push(VerseView {
-                    number: *section,
-                    text: text.clone(),
-                    id: format!("v{}:{}", chapter.0, section.0),
-                })
-            }
-            view.chapters.push(chapter_view);
-        }
-
-        view
     }
 }

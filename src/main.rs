@@ -2,10 +2,10 @@ mod bible;
 
 mod images;
 mod templates;
-mod traffic_log;
 
 mod erv;
 mod kjv;
+mod views;
 mod web;
 
 use bible::Bible;
@@ -15,7 +15,7 @@ use templates::TEMPLATES;
 use std::env;
 use std::sync::Arc;
 
-use tracing::info;
+use tracing::{Level, info};
 use tracing_subscriber::{EnvFilter, fmt};
 
 use dashmap::DashMap;
@@ -23,16 +23,18 @@ use dashmap::DashMap;
 use axum::{
     Router,
     extract::{Path, State},
-    middleware,
     response::{Html, Redirect},
     routing::get,
 };
+
+use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
 use serde::{Deserialize, Serialize};
 
 use tera::Context;
 
 use crate::bible::BookSlug;
+use crate::views::BookView;
 
 #[derive(Serialize, Deserialize)]
 enum Version {
@@ -85,11 +87,7 @@ async fn books(
             .entry(book_slug.clone())
             .or_insert_with(|| {
                 let mut context = Context::new();
-                context.insert("book", &book.name);
-                context.insert("prev_book", &state.bible.previous(&book_slug));
-                context.insert("next_book", &state.bible.next(&book_slug));
-                context.insert("book_view", &book.view());
-                context.insert("books", &state.bible.book_names());
+                context.insert("book", &BookView::new(&state.bible, &book));
                 context.insert("version", &VERSION);
                 context.insert("commit_hash", &state.commit_hash.as_str());
                 context.insert("bit_addr", &env::var("BIT_ADDR").ok());
@@ -121,7 +119,6 @@ async fn main() {
         .init();
 
     let app_state = Arc::new(AppState::default());
-    let traffic_log = traffic_log::TrafficLog::default();
 
     let app = Router::new()
         .route("/", get(index))
@@ -130,9 +127,12 @@ async fn main() {
         .route("/favicon.svg", get(images::favicon_svg))
         .route("/favicon.png", get(images::favicon_png))
         .route("/favicon.ico", get(images::favicon_ico))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        )
         .fallback(fallback)
-        .layer(middleware::from_fn(traffic_log::track_traffic))
-        .layer(axum::Extension(traffic_log))
         .with_state(app_state);
 
     let port = env::var("ROCKET_PORT")

@@ -1,4 +1,4 @@
-use crate::bible::{Bible, BookName, Chapter, Section, Verse, Text};
+use crate::bible::{Bible, BookName, Chapter, Section, Text, Verse};
 use regex::Regex;
 
 const TEXT: &str = include_str!("./web.txt");
@@ -14,12 +14,12 @@ pub fn load() -> Bible {
     let verses: Vec<Verse> = lines
         .map(|line| {
             let caps = re.captures(line).unwrap();
-            let book = &caps["book"].to_string();
+            let book = &caps["book"];
             let chapter = &caps["chapter"].parse::<usize>().unwrap();
             let section = &caps["section"].parse::<usize>().unwrap();
             let text = &caps["text"];
             Verse {
-                book: BookName(book.clone()),
+                book: BookName::new(book),
                 chapter: Chapter(*chapter),
                 section: Section(*section),
                 text: Text::new(text),

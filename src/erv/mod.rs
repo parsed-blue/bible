@@ -14,12 +14,12 @@ pub fn load() -> Bible {
     let verses: Vec<Verse> = lines
         .map(|line| {
             let caps = re.captures(line).unwrap();
-            let book = &caps["book"].to_lowercase();
+            let book = &caps["book"];
             let chapter = &caps["chapter"].parse::<usize>().unwrap();
             let section = &caps["section"].parse::<usize>().unwrap();
             let text = &caps["text"];
             Verse {
-                book: BookName(book.clone()),
+                book: BookName::new(book),
                 chapter: Chapter(*chapter),
                 section: Section(*section),
                 text: Text::new(text),
