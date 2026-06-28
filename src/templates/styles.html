@@ -115,6 +115,7 @@
         scroll-margin-top: 40vh;
         padding: 0.4rem;
         border-radius: 0.5rem;
+        transition: background 0.2s box-shadow 0.4s;
     }
     .chapter li div {
         display: flex;
@@ -130,6 +131,8 @@
     .chapter li:target {
         background: rgba(255, 85, 0, 0.20);
         border-right: 1px solid var(--accent);
+        box-shadow: inset 0px 0px 24px -12px var(--accent), 0 0 24px -12px white;
+        text-shadow: 0 0 10px white;
     }
  
     /* --- de-emphasized reference anchors --- */

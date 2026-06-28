@@ -10,6 +10,14 @@ pub struct BookView {
     pub index: Vec<BookNameView>,
     pub prev: Option<BookNameView>,
     pub next: Option<BookNameView>,
+    pub linkPreview: LinkPreviewView,
+}
+
+#[derive(Serialize)]
+pub struct LinkPreviewView {
+    pub title: String,
+    pub description: Option<String>, 
+    pub url: String,
 }
 
 #[derive(Serialize)]
@@ -39,7 +47,12 @@ impl BookView {
             chapters: Vec::new(),
             link: BookNameView {
                 display: book.name.0.clone(),
-                href: format!("/book/{}", book.name.slug().0),
+                href: format!("/book/{}", book.name.slug()),
+            },
+            linkPreview: LinkPreviewView {
+                title: book.name.0.clone(),
+                description: None,
+                url: format!("/book/{}", book.name.slug())
             },
             index: bible
                 .order
