@@ -48,20 +48,6 @@ Github: https://github.com/parsed-blue/bible{% if bit_addr or eth_addr %}
 {% if bit_addr %}Bitcoin address: {{bit_addr}}{% endif %}
 {% if eth_addr %}Ethereum address: {{eth_addr}}{% endif %}
 {% if xmr_addr %}Monero address: {{xmr_addr}}{% endif %}{% endif %}`);
-
-            document.addEventListener('DOMContentLoaded', () => {
-                document.querySelector('.chapter').addEventListener(
-                    'click',
-                    function updateOgData(event) {
-                        const {target} = event;
-                        if (target.tagName === 'A' && target.classList.contains('ref')) {
-                            const [p, a] = target.parentElement.children;
-                            document.querySelector('meta[property="og:url"]').content = a.href;
-                            document.querySelector('meta[property="og:description"]').content = p.textContent.trim();
-                        }
-                    }
-                );
-            });
         </script>
     </body>
 </html>
