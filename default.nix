@@ -4,7 +4,7 @@
   pkg-config,
 }:
 rustPlatform.buildRustPackage {
-  name = "kjv";
+  name = "parsed_blue_bible";
   src = ./.;
   buildInputs = [ glib ];
   nativeBuildInputs = [ pkg-config ];

@@ -1,18 +1,24 @@
 [package]
-name = "kjv"
+name = "parsed_blue_bible"
 version = "0.1.0"
 edition = "2024"
+
+[features]
+default = ["web"]
+kjv = []
+erv = []
+web = []
 
 [dependencies]
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dashmap = "6.1.0"
-lazy_static = "1.5.0"
-regex = "1.12.2"
 axum = "0.7"
 tokio = { version = "1.40", features = ["full"] }
-redis = "1.1.0"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0"
 tera = "1.20.1"
 tower-http = { version = "0.7.0", features = ["trace"] }
+
+
+[build-dependencies]
+regex = "1.12.2"

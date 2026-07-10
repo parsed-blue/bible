@@ -10,14 +10,14 @@ pub struct BookView {
     pub index: Vec<BookNameView>,
     pub prev: Option<BookNameView>,
     pub next: Option<BookNameView>,
-    pub linkPreview: LinkPreviewView,
+    pub link_preview: LinkPreviewView,
 }
 
 #[derive(Serialize)]
 pub struct LinkPreviewView {
     pub title: String,
-    pub description: Option<String>, 
-    pub url: String,
+    pub description: Option<String>,
+    pub url: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -41,7 +41,7 @@ pub struct VerseView {
 }
 
 impl BookView {
-    pub fn new(bible: &Bible, book: &Book) -> BookView {
+    pub fn new(bible: &Bible, book: &Book, base_url: Option<&str>) -> BookView {
         let mut view: BookView = BookView {
             title: book.name.clone(),
             chapters: Vec::new(),
@@ -49,16 +49,17 @@ impl BookView {
                 display: book.name.0.clone(),
                 href: format!("/book/{}", book.name.slug()),
             },
-            linkPreview: LinkPreviewView {
+            link_preview: LinkPreviewView {
                 title: book.name.0.clone(),
                 description: None,
-                url: format!("/book/{}", book.name.slug())
+                url: base_url
+                    .map(|url| format!("{}/book/{}", url.trim_end_matches('/'), book.name.slug())),
             },
             index: bible
                 .order
                 .iter()
                 .map(|slug| {
-                    let book = bible.books.get(slug).expect("");
+                    let book = bible.books.get(slug).expect("book not found");
                     BookNameView {
                         display: book.name.0.clone(),
                         href: format!("/book/{}", slug.0),

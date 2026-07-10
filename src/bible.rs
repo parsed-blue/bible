@@ -2,13 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Verse {
-    pub book: BookName,
-    pub chapter: Chapter,
-    pub section: Section,
-    pub text: Text,
-}
+pub type VerseRecord = (&'static str, usize, usize, &'static str);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Text(pub String);
@@ -60,22 +54,21 @@ pub struct Bible {
 }
 
 impl Bible {
-    pub fn from_verses(verses: Vec<Verse>) -> Bible {
+    pub fn from_records(records: &[VerseRecord]) -> Bible {
         let mut order: Vec<BookSlug> = vec![];
 
         let mut books: HashMap<BookSlug, Book> = HashMap::new();
 
-        for verse in verses.iter() {
-            let slug = verse.book.slug();
-            if order.last() != Some(&slug) {
+        for &(book, chapter, section, text) in records {
+            let name = BookName::new(book);
+            let slug = name.slug();
+            if !books.contains_key(&slug) {
                 order.push(slug.clone());
             }
 
-            let book = books
-                .entry(slug.clone())
-                .or_insert_with(|| Book::new(verse.book.clone()));
-            let chapter = book.chapters.entry(verse.chapter).or_default();
-            chapter.insert(verse.section, verse.text.clone());
+            let book = books.entry(slug).or_insert_with(|| Book::new(name));
+            let chapter = book.chapters.entry(Chapter(chapter)).or_default();
+            chapter.insert(Section(section), Text::new(text));
         }
 
         Bible { order, books }
@@ -86,15 +79,10 @@ impl Bible {
     }
 
     pub fn previous(&self, book: &BookSlug) -> Option<(&BookName, &BookSlug)> {
-        for c in 0..self.order.len() {
-            if self.order.get(c + 1) == Some(book) {
-                let prev = self.order.get(c).unwrap();
-                let book = self.books.get(prev).unwrap();
-                return Some((&book.name, prev));
-            }
-        }
-
-        None
+        self.order.windows(2).find(|w| &w[1] == book).map(|w| {
+            let prev = &w[0];
+            (&self.books[prev].name, prev)
+        })
     }
 
     pub fn next(&self, book: &BookSlug) -> Option<(&BookName, &BookSlug)> {

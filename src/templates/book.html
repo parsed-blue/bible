@@ -7,9 +7,11 @@
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="icon" href="/favicon.png" type="image/png">
-        <meta property="og:title" content="{{book.linkPreview.title}}" />
-        <meta property="og:description" content="{{book.linkPreview.description}}" />
-        <meta property="og:url" content="{{book.linkPreview.url}}" />
+        <meta property="og:title" content="{{book.link_preview.title}}" />
+        <meta property="og:description" content="{{book.link_preview.description}}" />
+        {% if book.link_preview.url %}
+        <meta property="og:url" content="{{book.link_preview.url}}" />
+        {% endif %}
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         {% include "styles.html" %}
     </head>

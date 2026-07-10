@@ -1,19 +1,30 @@
 mod bible;
-
 mod images;
 mod templates;
-
-mod erv;
-mod kjv;
 mod views;
+
+#[cfg(feature = "erv")]
+mod erv;
+#[cfg(feature = "kjv")]
+mod kjv;
+#[cfg(feature = "web")]
 mod web;
+
+#[cfg(not(any(feature = "kjv", feature = "erv", feature = "web")))]
+compile_error!("Exactly one Bible version feature must be enabled: 'kjv', 'erv', or 'web'.");
+#[cfg(all(feature = "kjv", feature = "erv"))]
+compile_error!("Features 'kjv' and 'erv' are mutually exclusive.");
+#[cfg(all(feature = "kjv", feature = "web"))]
+compile_error!("Features 'kjv' and 'web' are mutually exclusive.");
+#[cfg(all(feature = "erv", feature = "web"))]
+compile_error!("Features 'erv' and 'web' are mutually exclusive.");
 
 use bible::Bible;
 
 use templates::TEMPLATES;
 
-use std::env;
 use std::sync::Arc;
+use std::{env, net::SocketAddr};
 
 use tracing::{Level, info};
 use tracing_subscriber::{EnvFilter, fmt};
@@ -29,29 +40,38 @@ use axum::{
 
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
-use serde::{Deserialize, Serialize};
-
 use tera::Context;
 
 use crate::bible::BookSlug;
 use crate::views::BookView;
 
-
 const COMMIT_HASH: Option<&str> = option_env!("COMMIT_HASH");
 
-#[derive(Serialize, Deserialize)]
-enum Version {
-    Kjv,
-    Erv,
-    Web,
-}
+#[cfg(feature = "kjv")]
+const VERSION: &str = "KJV";
+#[cfg(feature = "erv")]
+const VERSION: &str = "ERV";
+#[cfg(feature = "web")]
+const VERSION: &str = "WEB";
 
-const VERSION: Version = Version::Web;
+#[cfg(feature = "kjv")]
+fn load_bible() -> Bible {
+    kjv::load()
+}
+#[cfg(feature = "erv")]
+fn load_bible() -> Bible {
+    erv::load()
+}
+#[cfg(feature = "web")]
+fn load_bible() -> Bible {
+    web::load()
+}
 
 struct AppState {
     commit_hash: String,
     bible: Bible,
-    cache: Arc<DashMap<BookSlug, String>>,
+    cache: DashMap<BookSlug, String>,
+    base_url: Option<String>,
 }
 
 impl Default for AppState {
@@ -59,16 +79,11 @@ impl Default for AppState {
         Self {
             commit_hash: match COMMIT_HASH {
                 Some(var) => String::from(var),
-                None => {
-                    String::from("<unknown>")
-                },
+                None => String::from("<unknown>"),
             },
-            cache: Arc::new(DashMap::new()),
-            bible: match VERSION {
-                Version::Kjv => kjv::load(),
-                Version::Erv => erv::load(),
-                Version::Web => web::load(),
-            },
+            cache: DashMap::new(),
+            bible: load_bible(),
+            base_url: env::var("BASE_URL").ok(),
         }
     }
 }
@@ -86,23 +101,24 @@ async fn books(
         return Err(Redirect::to("/"));
     };
 
-    Ok(Html(
-        state
-            .cache
-            .entry(book_slug.clone())
-            .or_insert_with(|| {
-                let mut context = Context::new();
-                context.insert("book", &BookView::new(&state.bible, &book));
-                context.insert("version", &VERSION);
-                context.insert("commit_hash", &state.commit_hash.as_str());
-                context.insert("bit_addr", &env::var("BIT_ADDR").ok());
-                context.insert("eth_addr", &env::var("ETH_ADDR").ok());
-                context.insert("xmr_addr", &env::var("XMR_ADDR").ok());
-                TEMPLATES.render("book.html", &context).unwrap()
-            })
-            .value()
-            .clone(),
-    ))
+    if let Some(cached) = state.cache.get(&book_slug) {
+        return Ok(Html(cached.value().clone()));
+    }
+
+    let mut context = Context::new();
+    context.insert(
+        "book",
+        &BookView::new(&state.bible, book, state.base_url.as_deref()),
+    );
+    context.insert("version", &VERSION);
+    context.insert("commit_hash", &state.commit_hash.as_str());
+    context.insert("bit_addr", &env::var("BIT_ADDR").ok());
+    context.insert("eth_addr", &env::var("ETH_ADDR").ok());
+    context.insert("xmr_addr", &env::var("XMR_ADDR").ok());
+    let rendered = TEMPLATES.render("book.html", &context).unwrap();
+    let entry = state.cache.entry(book_slug.clone()).or_insert(rendered);
+
+    Ok(Html(entry.value().clone()))
 }
 
 async fn info(State(state): State<Arc<AppState>>) -> Html<String> {
@@ -140,13 +156,10 @@ async fn main() {
         .fallback(fallback)
         .with_state(app_state);
 
-    let port = env::var("ROCKET_PORT")
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8000".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8000".to_string());
 
-    let addr = format!("127.0.0.1:{}", port)
-        .parse::<std::net::SocketAddr>()
-        .unwrap();
+    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let addr = format!("{}:{}", host, port).parse::<SocketAddr>().unwrap();
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
     info!("Listening on http://{}", addr);
