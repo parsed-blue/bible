@@ -27,14 +27,28 @@
         fenix' = (import fenix { inherit system; });
         naersk' = pkgs.callPackage naersk { };
         commitHash = "\"${if (self ? rev) then self.rev else "dirty"}\"";
+
+        mkBiblePackage =
+          feature:
+          naersk'.buildPackage {
+            src = ./.;
+            cargoBuildOptions = opts: opts ++ [
+              "--no-default-features"
+              "--features"
+              feature
+              "--config"
+              "env.BUILD_REVISION=${pkgs.lib.escapeShellArg commitHash}"
+            ];
+          };
       in
       {
-        defaultPackage = naersk'.buildPackage {
-          src = ./.;
-          cargoBuildOptions = opts: opts ++ [ 
-            "--config" "env.BUILD_REVISION=${pkgs.lib.escapeShellArg commitHash}"
-          ];
+        packages = {
+          default = mkBiblePackage "web";
+          web = mkBiblePackage "web";
+          kjv = mkBiblePackage "kjv";
+          erv = mkBiblePackage "erv";
         };
+
         devShell = pkgs.mkShell {
           packages = with pkgs; [
             nixfmt
