@@ -8,7 +8,9 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="icon" href="/favicon.png" type="image/png">
         <meta property="og:title" content="{{book.link_preview.title}}" />
+        {% if book.link_preview.description %}
         <meta property="og:description" content="{{book.link_preview.description}}" />
+        {% endif %}
         {% if book.link_preview.url %}
         <meta property="og:url" content="{{book.link_preview.url}}" />
         {% endif %}
